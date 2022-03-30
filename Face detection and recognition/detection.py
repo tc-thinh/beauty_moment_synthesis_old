@@ -24,7 +24,6 @@ def create_mtcnn_model():
   >> model_A = create_mtcnn_model()
   >> model_A.image_size = 200
   >> model_A.min_face_size = 10
-
   """
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -90,7 +89,6 @@ def get_bb_attributes(mtcnn_model, frames, batch_size=32):
 
   + landmark_list: list .
       The list that contains facial landmarks for all predicted bounding boxes/
-
   """
 
   assert (type(frames) == np.ndarray and frames.ndim == 4), "Frames must be a 4D np.array"
