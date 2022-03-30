@@ -2,10 +2,11 @@ import tensorflow as tf
 from keras.models import load_model
 import cv2
 import numpy as np
+
 def load_model(model_path):
     model = load_model(model_path)
-    model.compile(optimizer=tf.keras.optimizers.Adam(0.0001), 
-                    loss='categorical_crossentropy',
+    model.compile(optimizer = tf.keras.optimizers.Adam(0.0001), 
+                    loss = 'categorical_crossentropy',
                     metrics = ['accuracy'])
     return model
 
