@@ -3,6 +3,7 @@ from keras.models import load_model
 import cv2
 import numpy as np
 
+
 def load_model(model_path):
     model = load_model(model_path)
     model.compile(optimizer = tf.keras.optimizers.Adam(0.0001), 
@@ -10,7 +11,9 @@ def load_model(model_path):
                     metrics = ['accuracy'])
     return model
 
+
 def get_smile_score(img_path, model):
+    
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -21,4 +24,5 @@ def get_smile_score(img_path, model):
     max_index = np.argmax(preditions[0])
     emotions = ('happy', 'unhappy')
     predicted_emotion = emotions[max_index]
+    
     return preditions[0][0]*100
