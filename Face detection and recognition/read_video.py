@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from tqdm.notebook import tqdm
 
 def read_video(path, seconds_per_frame = 1, ratio_to_resize = 1, read_all = False):
   """
@@ -63,6 +64,7 @@ def read_video(path, seconds_per_frame = 1, ratio_to_resize = 1, read_all = Fals
     ret = True
 
     buf = np.empty((listCount, frameHeight, frameWidth, 3), np.dtype('uint8'))
+    pbar = tqdm(total = listCount)
 
     while list_count < listCount and ret:
       cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count)
@@ -71,6 +73,9 @@ def read_video(path, seconds_per_frame = 1, ratio_to_resize = 1, read_all = Fals
       buf[list_count] = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
       frame_count += frame_interval
       list_count += 1
+      pbar.update(1)
+
+    pbar.close()
 
   else:
     print('Total number of frames that we will convert:', frameCount)
@@ -79,11 +84,15 @@ def read_video(path, seconds_per_frame = 1, ratio_to_resize = 1, read_all = Fals
     ret = True
 
     buf = np.empty((frame_count, frameHeight, frameWidth, 3), np.dtype('uint8'))
+    pbar = tqdm(total = frameCount)
 
     while frame_count < frameCount and ret:
       ret, img = cap.read()
       img = cv2.resize(img, (frameWidth, frameHeight), interpolation=cv2.INTER_AREA)
       buf[frame_count] = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
       frame_count += 1
+      pbar.update(1)
+
+    pbar.close()
 
   return buf

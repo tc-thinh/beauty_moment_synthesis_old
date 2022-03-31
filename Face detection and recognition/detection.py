@@ -43,7 +43,7 @@ def create_mtcnn_model():
   return mtcnn
 
 
-def get_bounding_box (mtcnn_model, frames, batch_size = 32):
+def get_bounding_box(mtcnn_model, frames, batch_size = 32):
   """
   This function detects human faces in the given batch of images / video frames
   in the Python Numpy Array format. It will return 3 lists - bounding box coordinates
