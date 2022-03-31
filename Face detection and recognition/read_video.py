@@ -64,7 +64,7 @@ def read_video(path, seconds_per_frame = 1, ratio_to_resize = 1, read_all = Fals
     ret = True
 
     buf = np.empty((listCount, frameHeight, frameWidth, 3), np.dtype('uint8'))
-    pbar = tqdm(total=listCount)
+    pbar = tqdm(total = listCount)
 
     while list_count < listCount and ret:
       cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count)
