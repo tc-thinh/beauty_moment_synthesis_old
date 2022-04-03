@@ -1,17 +1,19 @@
+from collections import namedtuple
+
 import torch
 import torch.nn as nn
-from torch.nn import Linear, Conv2d, BatchNorm1d, BatchNorm2d, PReLU, ReLU, Sigmoid, Dropout, MaxPool2d, \
-    AdaptiveAvgPool2d, Sequential, Module
-from collections import namedtuple
-import numpy as np
-import pdb
+from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Dropout, MaxPool2d, \
+    Sequential, Module
+
 
 class Flatten(Module):
     '''
     This method is to flatten the features
     '''
+
     def forward(self, input):
         return input.view(input.size(0), -1)
+
 
 def l2_norm(input, axis=1):
     '''
@@ -20,6 +22,7 @@ def l2_norm(input, axis=1):
     norm = torch.norm(input, 2, axis, True)
     output = torch.div(input, norm)
     return output
+
 
 class bottleneck_IR(Module):
     def __init__(self, in_channel, depth, stride):
@@ -34,9 +37,9 @@ class bottleneck_IR(Module):
                 Conv2d(in_channel, depth, (1, 1), stride, bias=False), BatchNorm2d(depth))
         self.res_layer = Sequential(
             BatchNorm2d(in_channel),
-            Conv2d(in_channel, depth, (3, 3), (1, 1), 1, bias=False), 
+            Conv2d(in_channel, depth, (3, 3), (1, 1), 1, bias=False),
             PReLU(depth),
-            Conv2d(depth, depth, (3, 3), stride, 1, bias=False), 
+            Conv2d(depth, depth, (3, 3), stride, 1, bias=False),
             BatchNorm2d(depth))
 
     def forward(self, x):
@@ -44,14 +47,17 @@ class bottleneck_IR(Module):
         res = self.res_layer(x)
         return res + shortcut
 
+
 class Bottleneck(namedtuple('Block', ['in_channel', 'depth', 'stride'])):
     '''A named tuple describing a ResNet block.'''
+
 
 def get_block(in_channel, depth, num_units, stride=2):
     '''
     This method is to obtain blocks
     '''
     return [Bottleneck(in_channel, depth, stride)] + [Bottleneck(depth, depth, 1) for i in range(num_units - 1)]
+
 
 def get_blocks(num_layers):
     '''
@@ -81,8 +87,9 @@ def get_blocks(num_layers):
 
     return blocks
 
+
 class Backbone(Module):
-    def __init__(self, input_size, num_layers, mode='ir', use_type = "Rec"):
+    def __init__(self, input_size, num_layers, mode='ir', use_type="Rec"):
         '''
         This method is to initialize model
         if use for quality network, select self.use_type == "Qua"
@@ -101,16 +108,16 @@ class Backbone(Module):
         if input_size[0] == 112:
             if use_type == "Qua":
                 self.quality = Sequential(Flatten(),
-                                      PReLU(512 * 7 * 7),
-                                      Dropout(0.5, inplace=False),
-                                      Linear(512 * 7 * 7, 1)
-                                    )
+                                          PReLU(512 * 7 * 7),
+                                          Dropout(0.5, inplace=False),
+                                          Linear(512 * 7 * 7, 1)
+                                          )
             else:
                 self.output_layer = Sequential(Flatten(),
-                                      PReLU(512 * 7 * 7),
-                                      Dropout(0.5, inplace=False),
-                                      Linear(512 * 7 * 7, 512)
-                                    )
+                                               PReLU(512 * 7 * 7),
+                                               Dropout(0.5, inplace=False),
+                                               Linear(512 * 7 * 7, 512)
+                                               )
         modules = []
         for block in blocks:
             for bottleneck in block:
@@ -151,11 +158,12 @@ class Backbone(Module):
                 if m.bias is not None:
                     m.bias.data.zero_()
 
-def R50(input_size, use_type = "Rec"):
+
+def R50(input_size, use_type="Rec"):
     '''
     This method is to create ResNet50 backbone
     if use for quality network, select self.use_type == "Qua"
     if use for recognition network, select self.use_type == "Rec"
     '''
-    model = Backbone(input_size, 50, 'ir', use_type = use_type)
+    model = Backbone(input_size, 50, 'ir', use_type=use_type)
     return model

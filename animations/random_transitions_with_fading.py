@@ -1,8 +1,9 @@
-import cv2
 import random
+import time as t
+
+import cv2
 import tensorflow as tf
 from tqdm import tqdm
-import time as t
 
 
 class Image:
@@ -65,7 +66,6 @@ class Image:
 
 
 def process(folder, output_name, fps=30, duration=3, size=500):
-
     start = t.time()
 
     filenames = []
@@ -91,7 +91,6 @@ def process(folder, output_name, fps=30, duration=3, size=500):
         # number of frames - time = number of frames/fps
 
         for i in tqdm(range((duration * fps) // 3)):
-
             alpha = i / (duration * fps)
             beta = 1.0 - alpha
             dst = cv2.addWeighted(img.get_frame(), alpha, prev_image.get_frame(), beta, 0.0)
@@ -105,6 +104,5 @@ def process(folder, output_name, fps=30, duration=3, size=500):
     out.release()
     end = t.time()
     print(f"Duration: {end - start}s")
-
 
 # process(folder="test/bboxes", output_name=r'results\output_video1.avi')
