@@ -37,7 +37,7 @@ def network(model_path, device):
 
 
 def FIQA(img_path):
-    net = network(model_path, device)
+    net = network(model_path, device)  # load model 1 lan th, df
     input_data = read_img(img_path)
     pred_score = net(input_data).data.cpu().numpy().squeeze()
     return pred_score
