@@ -1,8 +1,7 @@
 import cv2
 import tensorflow as tf
 
-def cover_animation(folder_name, filename, from_right = True, fps = 30, effect_speed = 2, duration = 1): # change speed to time
-    
+def process_images_for_vid(folder_name, effect_speed, duration, fps):
     images = []
     
     for i in range(len(tf.io.gfile.listdir(folder_name))):
@@ -13,7 +12,6 @@ def cover_animation(folder_name, filename, from_right = True, fps = 30, effect_s
     w = []
     
     for i in range(len(images)):
-
         height, width, _ = images[0].shape
         h.append(height)
         w.append(width)
@@ -21,20 +19,29 @@ def cover_animation(folder_name, filename, from_right = True, fps = 30, effect_s
     h = min(h)
     w = min(w)
     
-    if w%speed == 0:
+    if w%effect_speed == 0:
         k = w//effect_speed
     else:
         k = w//effect_speed + 1
     
     assert duration - k/fps > 0, "change your parameters"
     
-    frameSize = (w, h)
-    out = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'DIVX'), fps, frameSize)
-    
     img_list = []
     for i in range(len(images)):
         img = cv2.resize(images[i], (w,h))
         img_list.append(img)
+    
+    return img_list, w, h
+
+def cover_animation(folder_name, filename, from_right = True, fps = 30, effect_speed = 2, duration = 1): # change speed to time
+    
+    img_list, w, h = process_images_for_vid(folder_name = folder_name, 
+                                            effect_speed = effect_speed, 
+                                            duration = duration, 
+                                            fps = fps)
+    
+    # initialize video
+    out = cv2.VideoWriter(r"{}".format(filename), cv2.VideoWriter_fourcc(*'DIVX'), fps, (w, h))    
     
     if from_right:
         for i in range(len(img_list)-1):
@@ -51,7 +58,6 @@ def cover_animation(folder_name, filename, from_right = True, fps = 30, effect_s
             # static image in the remaining frames
             for i in range(fps*duration - j):
                 out.write(result)
-
     else:
         for i in range(len(img_list)-1):
             j = 0
@@ -70,5 +76,7 @@ def cover_animation(folder_name, filename, from_right = True, fps = 30, effect_s
                 
     # io.mimsave(filename, results, fps = 60)
     out.release()
+    
+cover_animation(folder_name = "test", filename = "results/output_video.avi", from_right = False, fps = 120, effect_speed = 1, duration = 3)
 
 # cover_animation(img1, img2, filename = "results/output_video.avi", from_right = False, color_mode = "BGR", fps = 256, speed = 1)

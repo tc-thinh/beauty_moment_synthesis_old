@@ -65,44 +65,38 @@ class Image:
         return roi
 
 
-def process(folder, output_name, fps=30, duration=3, size=500):
-    start = t.time()
-
+def fade_process(folder, output_name, fps = 30, duration = 3, size = 500):
+    start = time.time()
+    
     filenames = []
-
     for i in range(len(tf.io.gfile.listdir(folder))):
         filenames.append(tf.io.gfile.join(folder, tf.io.gfile.listdir(folder)[i]))
-
+        
     images = []
-
     for filename in filenames:
         print(filename)
-        img = Image(filename, time=500, size=size)
+        img = Image(filename, time = 500, size = size)
         images.append(img)
-
+        
     prev_image = images[0]
     prev_image.reset()
     out = cv2.VideoWriter(output_name, cv2.VideoWriter_fourcc(*'DIVX'), fps, (size, size))
-
+    
     for j in range(1, len(images)):
-
         img = images[j]
         img.reset()
         # number of frames - time = number of frames/fps
-
-        for i in tqdm(range((duration * fps) // 3)):
-            alpha = i / (duration * fps)
+        for i in tqdm(range((duration*fps)//3)):
+            alpha = i/(duration*fps)
             beta = 1.0 - alpha
             dst = cv2.addWeighted(img.get_frame(), alpha, prev_image.get_frame(), beta, 0.0)
             out.write(dst)
-
         prev_image = img
-
-        for _ in tqdm(range(duration * fps)):  # number of frames
+        for _ in tqdm(range(2*(duration*fps)//3)): # number of frames
             out.write(img.get_frame())
-
+            
     out.release()
-    end = t.time()
+    end = time.time()
     print(f"Duration: {end - start}s")
 
 # process(folder="test/bboxes", output_name=r'results\output_video1.avi')
