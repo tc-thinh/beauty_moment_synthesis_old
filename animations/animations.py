@@ -77,6 +77,37 @@ def cover_animation(folder_name, filename, from_right = True, fps = 30, effect_s
     # io.mimsave(filename, results, fps = 60)
     out.release()
     
-cover_animation(folder_name = "test", filename = "results/output_video.avi", from_right = False, fps = 120, effect_speed = 1, duration = 3)
+# cover_animation(folder_name = "test", filename = "results/output_video.avi", from_right = False, fps = 120, effect_speed = 1, duration = 3)
 
-# cover_animation(img1, img2, filename = "results/output_video.avi", from_right = False, color_mode = "BGR", fps = 256, speed = 1)
+def comb_animation(folder_name, filename, fps = 30, effect_speed = 2, duration = 1): 
+    
+    img_list, w, h = process_images_for_vid(folder_name = folder_name, 
+                                            effect_speed = effect_speed, 
+                                            duration = duration, 
+                                            fps = fps)
+    
+    # initialize video
+    out = cv2.VideoWriter(r"{}".format(filename), cv2.VideoWriter_fourcc(*'DIVX'), fps, (w, h))    
+    
+    h1 = h // lines
+    for i in range(len(img_list)-1):
+        j = 0
+        for D in range(0, w + 1, effect_speed):
+            result = img_list[0].copy()
+            for L in range(0, lines, 2):
+                result[h1*L:h1*(L+1), 0:D, :] = img_list[i+1][h1*L:h1*(L+1), w - D:w, :]
+                result[h1*L:h1*(L+1), D:w, :] = img_list[i][h1*L:h1*(L+1), 0:w - D]
+                result[h1*(L+1):h1*(L+2), 0:w - D, :] = img_list[i][h1*(L+1):h1*(L+2), D:w, :]
+                result[h1*(L+1):h1*(L+2), w - D:w, :] = img_list[i+1][h1*(L+1):h1*(L+2), 0:D, :]
+
+            out.write(result)
+            j += 1
+
+        # static image in the remaining frames
+        for k in range(fps*duration - j):
+            out.write(img_list[i+1])
+                
+    # io.mimsave(filename, results, fps = 60)
+    out.release()
+    
+# comb_animation(folder_name = "test", filename = "results/output_video4.avi", fps = 75, effect_speed = 2, duration = 3)
