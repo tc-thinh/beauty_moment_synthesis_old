@@ -113,6 +113,89 @@ def comb_animation(folder_name, filename, fps=30, effect_speed=2, duration=1):
     out.release()
 
 
+def push_animation(folder_name, filename, fps=30, effect_speed=2, duration=1):
+    img_list, w, h = process_images_for_vid(folder_name=folder_name,
+                                            effect_speed=effect_speed,
+                                            duration=duration,
+                                            fps=fps)
+
+    # initialize video
+    out = cv2.VideoWriter(r"{}".format(filename), cv2.VideoWriter_fourcc(*'DIVX'), fps, (w, h))
+
+    for i in range(len(img_list) - 1):
+        j = 0
+        for D in range(0, h + 1, effect_speed):
+            result = img_list[i].copy()
+            result[0:h - D, :, :] = img_list[i][D:h, :, :]
+            result[h - D:h, :, :] = img_list[i + 1][0:D, :, :]
+
+            out.write(result)
+            j += 1
+
+        # static image in the remaining frames
+        for k in range(fps * duration - j):
+            out.write(img_list[i + 1])
+
+    # io.mimsave(filename, results, fps = 60)
+    out.release()
+
+
+def uncover_animation(folder_name, filename, fps=30, effect_speed=2, duration=1):
+    img_list, w, h = process_images_for_vid(folder_name=folder_name,
+                                            effect_speed=effect_speed,
+                                            duration=duration,
+                                            fps=fps)
+
+    # initialize video
+    out = cv2.VideoWriter(r"{}".format(filename), cv2.VideoWriter_fourcc(*'DIVX'), fps, (w, h))
+
+    for i in range(len(img_list) - 1):
+        j = 0
+        for D in range(0, w + 1, effect_speed):
+            result = img_list[i].copy()
+            result[:, 0:w - D, :] = img_list[i][:, D:w, :]
+            result[:, w - D:w, :] = img_list[i + 1][:, w - D:w, :]
+
+            out.write(result)
+            j += 1
+
+        # static image in the remaining frames
+        for k in range(fps * duration - j):
+            out.write(img_list[i + 1])
+
+    # io.mimsave(filename, results, fps = 60)
+    out.release()
+
+
+def split_animation(folder_name, filename, fps=30, effect_speed=2, duration=1):
+    img_list, w, h = process_images_for_vid(folder_name=folder_name,
+                                            effect_speed=effect_speed,
+                                            duration=duration,
+                                            fps=fps)
+
+    # initialize video
+    out = cv2.VideoWriter(r"{}".format(filename), cv2.VideoWriter_fourcc(*'DIVX'), fps, (w, h))
+
+    for i in range(len(img_list) - 1):
+        j = 0
+        for D in range(0, w // 2, effect_speed):
+            result = img_list[i].copy()
+            result[:, w // 2 - D:w // 2 + D, :] = img_list[i + 1][:, w // 2 - D:w // 2 + D, :]
+            result[:, 0:w // 2 - D, :] = img_list[i][:, 0:w // 2 - D, :]
+            result[:, w // 2 + D:w, :] = img_list[i][:, w // 2 + D:w, :]
+
+            out.write(result)
+            j += 1
+
+        # static image in the remaining frames
+        for k in range(fps * duration - j):
+            out.write(img_list[i + 1])
+
+    # io.mimsave(filename, results, fps = 60)
+    out.release()
+
+
+
 # comb_animation(folder_name = "test", filename = "results/output_video4.avi", fps = 75, effect_speed = 2, duration = 3)
 
 def make_video(img_list, output_path):
