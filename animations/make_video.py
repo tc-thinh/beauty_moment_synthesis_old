@@ -1,5 +1,4 @@
 import random
-
 from animations import comb_animation as comb
 from animations import cover_animation as cover
 from animations import extract_vid as vid
