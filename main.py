@@ -2,7 +2,7 @@ import argparse
 
 from SDD_FIQA import *
 from animations.animations import *
-
+from face_reg.detection import *
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Face Detection and Recognition',
@@ -61,7 +61,7 @@ def load_models():
 
 def main():
     args = parse_args()
-    df = face_reg(args.original_dataset_path, args.anchor_dataset_path)
+    df = face_detection (args.original_dataset_path, args.anchor_dataset_path)
     df = FIQA(df)
     smile_model = load_models()
     df = get_smile_scores(df)  # return ordered image name
