@@ -60,7 +60,7 @@ def read_anchor_images(path):
     Return people's ids for those images (needed for Face Recognition).
 
     """
-    folder_name = [name for name in os.listdir(path) if name[-3:] != 'txt' ]
+    folder_name = [name for name in os.listdir(path) if name[-3:] != 'txt']
     folder_name.sort()
     folder_path = [os.path.join(path, name) for name in folder_name]
     img_list = list(map(read_input_images, folder_path))
@@ -180,7 +180,7 @@ def get_bounding_box(mtcnn_model, frames, batch_size=32):
     box_probs_list = []
     landmark_list = []
 
-    for batch_file in tqdm(frames):
+    for batch_file in frames:
         with torch.no_grad():
             bb_frames, box_probs, landmark = mtcnn_model.detect(batch_file, landmarks=True)
 
