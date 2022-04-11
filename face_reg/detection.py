@@ -31,8 +31,8 @@ def read_input_images(path, purpose='anchor'):
     Return all the images in the input dataset in the Python Numpy Array format, as well as their names.
 
     """
-    all_path = [os.path.join(path, name) for name in os.listdir(path) if name[-3:] == 'jpg']
-    file_name = [name for name in os.listdir(path) if name[-3:] == 'jpg']
+    all_path = [os.path.join(path, name) for name in os.listdir(path)]
+    file_name = [name for name in os.listdir(path)]
     img_list = list(map(read_images, all_path))
 
     if purpose == 'input':
@@ -60,7 +60,7 @@ def read_anchor_images(path):
     Return people's ids for those images (needed for Face Recognition).
 
     """
-    folder_name = [name for name in os.listdir(path) if name[-3:] != 'txt']
+    folder_name = [name for name in os.listdir(path) if name[-3:] != 'txt' ]
     folder_name.sort()
     folder_path = [os.path.join(path, name) for name in folder_name]
     img_list = list(map(read_input_images, folder_path))
@@ -181,7 +181,8 @@ def get_bounding_box(mtcnn_model, frames, batch_size=32):
     landmark_list = []
 
     for batch_file in tqdm(frames):
-        bb_frames, box_probs, landmark = mtcnn_model.detect(batch_file, landmarks=True)
+        with torch.no_grad():
+            bb_frames, box_probs, landmark = mtcnn_model.detect(batch_file, landmarks=True)
 
         for ind in range(len(bb_frames)):
             if bb_frames[ind] is not None:
