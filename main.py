@@ -4,6 +4,7 @@ from SDD_FIQA import *
 from animations.animations import *
 from face_reg.detection import *
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Face Detection and Recognition',
                                      usage='A module to detect and recognize faces in pictures')
@@ -29,25 +30,25 @@ def parse_args():
     parser.add_argument('--number_of_images',
                         help='Number of images will be presented in the video',
                         type=int,
-                        required=True,
+                        required=False,
                         default=10)
 
     parser.add_argument('--effect_speed',
                         help='Video args',
                         type=int,
-                        required=True,
+                        required=False,
                         default=1)
 
     parser.add_argument('--duration',
                         help='Video args',
                         type=int,
-                        required=True,
+                        required=False,
                         default=3)
 
     parser.add_argument('--fps',
                         help='Video args',
                         type=int,
-                        required=True,
+                        required=False,
                         default=75)
 
     args = parser.parse_args()
@@ -61,13 +62,14 @@ def load_models():
 
 def main():
     args = parse_args()
-    df = face_detection (args.original_dataset_path, args.anchor_dataset_path)
-    df = FIQA(df)
-    smile_model = load_models()
-    df = get_smile_scores(df)  # return ordered image name
-    img_list = process_images_for_vid(df, k=number_of_images, effect_speed=args.effect_speed, duration=args.duration,
-                                      fps=args.fps)
-    make_video(img_list=img_list, output_path=output_path)
+    df = face_detection(args.original_dataset_path, args.anchor_dataset_path)
+    df.head()
+    # df = FIQA(df)
+    # smile_model = load_models()
+    # df = get_smile_scores(df)  # return ordered image name
+    # img_list = process_images_for_vid(df, k=number_of_images, effect_speed=args.effect_speed, duration=args.duration,
+    #                                   fps=args.fps)
+    # make_video(img_list=img_list, output_path=output_path)
 
 
 if __name__ == '__main__':
