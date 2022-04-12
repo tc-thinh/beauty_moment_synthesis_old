@@ -2,7 +2,6 @@ from facenet_pytorch import MTCNN
 import torch
 import numpy as np
 import math
-from tqdm.notebook import tqdm
 import os
 import cv2
 import pandas as pd
@@ -396,6 +395,6 @@ def face_detection(original_path, anchor_path):
     input_boxes, _, _ = get_bounding_box(mtcnn, input_img, 32)
     input_boxes = clipping(input_img, input_boxes)
 
-    df = pd.DataFrame({'Filename': input_name, 'Bboxes': input_boxes})
+    df = pd.DataFrame({'filename': input_name, 'bboxes': input_boxes})
 
     return df

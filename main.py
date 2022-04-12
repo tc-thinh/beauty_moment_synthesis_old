@@ -63,8 +63,8 @@ def load_models():
 def main():
     args = parse_args()
     df = face_detection(args.original_dataset_path, args.anchor_dataset_path)
-    df.head()
-    # df = FIQA(df)
+    df = FIQA(df)
+    print(df.head())
     # smile_model = load_models()
     # df = get_smile_scores(df)  # return ordered image name
     # img_list = process_images_for_vid(df, k=number_of_images, effect_speed=args.effect_speed, duration=args.duration,
