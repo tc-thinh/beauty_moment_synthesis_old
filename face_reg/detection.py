@@ -73,7 +73,8 @@ def read_anchor_images(path):
             img_label.append(folder_name[ind])
             img_flatten_list.append(img)
 
-    img_flatten_list = np.array(img_flatten_list).reshape(-1, img_flatten_list[0].shape[-3], img_flatten_list[0].shape[-2], 3)
+    img_flatten_list = np.array(img_flatten_list).reshape(-1, img_flatten_list[0].shape[-3],
+                                                          img_flatten_list[0].shape[-2], 3)
     img_label = np.array(img_label).reshape(-1, )
 
     return img_label, img_flatten_list
@@ -233,13 +234,13 @@ def convert_bounding_box(box, input_type, change_to):
     """
     assert (type(box) == list), 'The provided bounding box must be a Python list'
     assert (
-                len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
+            len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
     assert (
-                input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
+            input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
     assert (
-                change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
+            change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
     assert (
-                input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
+            input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
 
     if input_type == 'opencv':
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]
@@ -304,34 +305,34 @@ def clipping(img_list, boxes):
     The predicted bounding boxes
     """
 
-    def clipping_method(img, box, form='opencv'):
-        if form == 'opencv':
+    def clipping_method(img, box, format='opencv'):
+        if format == 'opencv':
             x_left, y_top, x_right, y_bot = int(box[0]), int(box[1]), int(box[2]), int(box[3])
 
-            x_left = min(max(x_left, 0), img.shape[-3])
-            y_top = min(max(y_top, 0), img.shape[-2])
-            x_right = min(max(x_right, 0), img.shape[-3] - x_left)
-            y_bot = min(max(y_bot, 0), img.shape[-2] - y_top)
+            x_left = min(max(x_left, 0), img.shape[-2])
+            y_top = min(max(y_top, 0), img.shape[-3])  # (h,w,3)
+            x_right = min(max(x_right, 0), img.shape[-2])
+            y_bot = min(max(y_bot, 0), img.shape[-3])
 
             return [x_left, y_top, x_right, y_bot]
 
-        elif form == 'coco':
+        elif format == 'coco':
             x_left, y_top, width, height = int(box[0]), int(box[1]), int(box[2]), int(box[3])
 
-            x_left = min(max(x_left, 0), img.shape[-3])
-            y_top = min(max(y_top, 0), img.shape[-2])
-            width = min(max(width, 0), img_list.shape[-3] - x_left)
-            height = min(max(height, 0), img_list.shape[-2] - y_top)
+            x_left = min(max(x_left, 0), img.shape[-2])
+            y_top = min(max(y_top, 0), img.shape[-3])
+            width = min(max(width, 0), img_list.shape[-2])
+            height = min(max(height, 0), img_list.shape[-3])
 
             return [x_left, y_top, width, height]
 
-        elif form == 'yolo':
+        elif format == 'yolo':
             x_center, y_center, width, height = int(box[0]), int(box[1]), int(box[2]), int(box[3])
 
-            x_center = min(max(x_center, 0), img.shape[0])
-            y_center = min(max(y_center, 0), img.shape[0])
-            width = min(max(width, 0), img_list.shape[0])
-            height = min(max(height, 0), img_list.shape[1])
+            x_center = min(max(x_center, 0), img.shape[-2])
+            y_center = min(max(y_center, 0), img.shape[-3])
+            width = min(max(width, 0), img_list.shape[-2])
+            height = min(max(height, 0), img_list.shape[-3])
 
             return [x_center, y_center, width, height]
 
@@ -344,12 +345,31 @@ def clipping(img_list, boxes):
 
         elif len(boxes[i]) == 1:
             if boxes[i][0] is not None:
-                box_clipping.append([clipping_method(img_list[i], box=boxes[i][0], form='opencv')])
+                box_clipping.append([clipping_method(img_list[i], box=boxes[i][0], format='opencv')])
 
             else:
                 box_clipping.append([[None]])
 
     return box_clipping
+
+
+def cropping_face(img_list, box_clipping, percent=0):
+
+    def crop_with_percent(img, box, percent):
+        box = box[0]
+        x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]
+
+        x_left -= percent * (x_right - x_left)
+        x_right += percent * (x_right - x_left)
+        y_top -= percent * (y_bot - y_top)
+        y_bot += percent * (y_bot - y_top)
+        target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right), :]
+
+        return np.array(target_img).astype('int16')
+
+    target_img = [crop_with_percent(img_list[i], box_clipping[i], percent) for i in range(len(box_clipping))]
+
+    return target_img
 
 
 def face_detection(original_path, anchor_path):
