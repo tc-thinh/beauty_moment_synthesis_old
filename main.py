@@ -56,6 +56,11 @@ def parse_args():
     return args
 
 
+def load_models():
+    smile_model = load_model(r"")
+    return smile_model
+
+
 def main():
     args = parse_args()
     df = face_detection(args.original_dataset_path, args.anchor_dataset_path)

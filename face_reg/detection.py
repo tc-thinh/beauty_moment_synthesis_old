@@ -516,5 +516,5 @@ def face_detection(original_path, anchor_path):
     input_ids = knn_predict(knn, input_embed)
 
     df = pd.DataFrame({'filename': input_name, 'bboxes': input_boxes, 'ids': input_ids})
-
+    
     return df
