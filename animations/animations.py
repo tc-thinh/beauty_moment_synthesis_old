@@ -1,7 +1,5 @@
 import random
-
 import cv2
-from tqdm import tqdm
 
 
 def process_images_for_vid(img_list, effect_speed, duration, fps, fraction):
@@ -231,13 +229,13 @@ def fade_animation(img_list, w, h, fps=30, effect_speed=2, duration=1):
         img = img_list[j]
         img.reset()
         # number of frames - time = number of frames/fps
-        for i in tqdm(range((duration * fps) // 3)):
+        for i in range((duration * fps) // 3):
             alpha = i / (duration * fps)
             beta = 1.0 - alpha
             dst = cv2.addWeighted(img.get_frame(), alpha, prev_image.get_frame(), beta, 0.0)
             frames.append(dst)
         prev_image = img
-        for _ in tqdm(range(2 * (duration * fps) // 3)):  # number of frames
+        for _ in range(2 * (duration * fps) // 3):  # number of frames
             frames.append(img.get_frame())
 
     return frames
