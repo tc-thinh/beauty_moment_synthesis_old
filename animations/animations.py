@@ -4,7 +4,7 @@ import cv2
 from tqdm import tqdm
 
 
-def process_images_for_vid(img_list, effect_speed, duration, fps):
+def process_images_for_vid(img_list, effect_speed, duration, fps, fraction):
     images = []
 
     for i in range(len(img_list)):
@@ -19,8 +19,8 @@ def process_images_for_vid(img_list, effect_speed, duration, fps):
         h.append(height)
         w.append(width)
 
-    h = min(h)
-    w = min(w)
+    h = int(min(h)/fraction)
+    w = int(min(w)/fraction)
 
     if w % effect_speed == 0:
         k = w // effect_speed

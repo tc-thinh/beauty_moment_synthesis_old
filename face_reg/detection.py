@@ -5,7 +5,6 @@ import numpy as np
 import cv2
 import pandas as pd
 import math
-from tqdm.notebook import tqdm
 import os
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -384,27 +383,6 @@ def clipping(img_list, boxes):
 
     return box_clipping
 
-
-def get_knn(x, y):
-    knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean', algorithm='brute')
-    knn.fit(x, y)
-
-    return knn
-
-
-def knn_predict(model, embeddings):
-    predicted_ids = [list(model.predict(embedding)) for embedding in embeddings]
-
-    final_ids = []
-    for ids in predicted_ids:
-        collected_ids = np.array(ids)
-        collected_ids = np.array_split(collected_ids, len(ids))
-        collected_ids = [id.tolist() for id in collected_ids]
-        final_ids.append(collected_ids)
-
-    return final_ids
-
-
 def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
 
     def crop_with_percent(img, box, percent=0):
@@ -477,7 +455,26 @@ def vector_embedding(infer_model, img_list, purpose='input'):
 
     return vector_embeddings
 
+def get_knn(x, y):
+    knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean', algorithm='brute')
+    knn.fit(x, y)
 
+    return knn
+
+
+def knn_predict(model, embeddings):
+    predicted_ids = [list(model.predict(embedding)) for embedding in embeddings]
+
+    final_ids = []
+    for ids in predicted_ids:
+        collected_ids = np.array(ids)
+        collected_ids = np.array_split(collected_ids, len(ids))
+        collected_ids = [id.tolist() for id in collected_ids]
+        final_ids.append(collected_ids)
+
+    return final_ids
+
+  
 def face_detection(original_path, anchor_path):
     """
     This function performs face detection in the given image dataset.

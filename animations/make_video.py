@@ -34,6 +34,6 @@ def make_video(img_list, output_path, effect_speed=1, duration=3, fps=30):
     vid(frames=frames, output_path=output_path, w=w, h=h, fps=fps)
 
 # img_list = []
-# for i in range(len(os.listdir(r"test"))):
-# img_list.append("test/"+os.listdir(r"test")[i])
-# make_video(img_list=img_list, output_path="results/output.avi", effect_speed=1, duration=3, fps=30)
+# for i in range(len(os.listdir(r"test/img"))):
+#     img_list.append("test/img/"+os.listdir(r"test/img")[i])
+# make_video(img_list=img_list, output_path="results/output_test.avi", effect_speed=2, duration=5, fps=120, fraction=2)
