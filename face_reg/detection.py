@@ -207,7 +207,6 @@ def get_bounding_box(mtcnn_model, frames, batch_size=32):
 
     return bboxes_pred_list, box_probs_list, landmark_list
 
-
 def convert_bounding_box(box, input_type, change_to):
     """
     This function converts an input bounding box to either YOLO, COCO, or OpenCV
@@ -501,8 +500,8 @@ def face_detection(original_path, anchor_path):
     input_boxes, _, _ = get_bounding_box(mtcnn, input_img, 64)
     anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, 64)
 
-    input_boxes = clipping_box(input_img, input_boxes)
-    anchor_boxes = clipping_box(anchor_img, anchor_boxes)
+    input_boxes = clipping(input_img, input_boxes)
+    anchor_boxes = clipping(anchor_img, anchor_boxes)
 
     _, input_img, input_boxes, input_name = filter_images(input_name, input_img, input_boxes)
     _, anchor_img, anchor_boxes, anchor_label = filter_images(anchor_label, anchor_img, anchor_boxes)
