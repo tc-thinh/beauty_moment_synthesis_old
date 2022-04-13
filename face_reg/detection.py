@@ -509,6 +509,11 @@ def face_detection(original_path, anchor_path):
     cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose='anchor')
     cropped_img_input = cropping_face(input_img, input_boxes, purpose='input')
 
+    del anchor_img
+    del anchor_boxes
+    del input_img
+    del input_boxes
+    
     anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose='anchor')
     input_embed = vector_embedding(infer_model, cropped_img_input, purpose='input')
 
