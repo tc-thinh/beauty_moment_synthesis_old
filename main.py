@@ -57,7 +57,7 @@ def parse_args():
 
 
 def load_models():
-    smile_model = load_model("")
+    smile_model = load_model(r"")
     return smile_model
 
 
@@ -65,8 +65,10 @@ def main():
     args = parse_args()
     df = face_detection(args.original_dataset_path, args.anchor_dataset_path)
     df = FIQA(df)
-    smile_model = load_models()
+    print(df.head())
+    smile_model = load_model(r"")
     filename_list = get_smile_score(df, smile_model)  # return ordered image name
+    print(filename_list)
     # img_list = process_images_for_vid(df, k=number_of_images, effect_speed=args.effect_speed, duration=args.duration,
     #                                   fps=args.fps)
     # make_video(img_list=img_list, output_path=output_path)
