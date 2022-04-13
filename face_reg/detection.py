@@ -1,11 +1,12 @@
-from facenet_pytorch import MTCNN
+from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
+from torchvision import transforms
 import numpy as np
-import math
-import os
 import cv2
 import pandas as pd
-
+import math
+import os
+from sklearn.neighbors import KNeighborsClassifier
 
 def read_images(path):
     img = cv2.imread(path, 1)
@@ -103,8 +104,8 @@ def create_mtcnn_model():
     print('Used device: {}'.format(device))
 
     mtcnn = MTCNN(
-        image_size=160, margin=0, min_face_size=10,
-        thresholds=[0.6, 0.7, 0.7], post_process=False,
+        image_size=160, margin=0, min_face_size=50,
+        thresholds=[0.7, 0.7, 0.8], post_process=False,
         device=device, selection_method='largest_over_threshold'
     )
 
@@ -114,6 +115,16 @@ def create_mtcnn_model():
         print('Fail to create a MTCNN model base')
 
     return mtcnn
+
+
+def get_model():
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    infer_model = InceptionResnetV1(pretrained='vggface2', device=device).eval()
+
+    mtcnn = create_mtcnn_model()
+    mtcnn.keep_all = False
+
+    return mtcnn, infer_model
 
 
 def get_bounding_box(mtcnn_model, frames, batch_size=32):
@@ -196,7 +207,6 @@ def get_bounding_box(mtcnn_model, frames, batch_size=32):
 
     return bboxes_pred_list, box_probs_list, landmark_list
 
-
 def convert_bounding_box(box, input_type, change_to):
     """
     This function converts an input bounding box to either YOLO, COCO, or OpenCV
@@ -231,14 +241,10 @@ def convert_bounding_box(box, input_type, change_to):
 
     """
     assert (type(box) == list), 'The provided bounding box must be a Python list'
-    assert (
-                len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
-    assert (
-                input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
-    assert (
-                change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
-    assert (
-                input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
+    assert (len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
+    assert (input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
+    assert (change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
+    assert (input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
 
     if input_type == 'opencv':
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]
@@ -290,6 +296,31 @@ def convert_bounding_box(box, input_type, change_to):
             return [x_center, y_center, width, height]
 
 
+def fixed_image_standardization(image_tensor):
+    processed_tensor = (image_tensor - 127.5) / 128.0
+    return processed_tensor
+
+
+def transform(img):
+    normalized = transforms.Compose([
+        transforms.ToTensor(),
+        fixed_image_standardization
+    ])
+    return normalized(img)
+
+
+def filter_images(name, img_list, boxes):
+ #   discard_index = [i for i, x in enumerate(boxes) if x[0] == [None]]
+ #   if discard_index != [None]:
+ #       discard_name = [name[i] for i in discard_index]
+
+    keep_index = [i for i, x in enumerate(boxes) if x[0] != [None]]
+    img_final = [img_list[i] for i in keep_index]
+    box_list_final = [boxes[i] for i in keep_index]
+    name_final = [name[i] for i in keep_index]
+    return np.array(img_final), box_list_final, name_final
+
+
 def clipping(img_list, boxes):
     """
     This function clips the predicted bounding boxes to appropriate ranges.
@@ -303,18 +334,18 @@ def clipping(img_list, boxes):
     The predicted bounding boxes
     """
 
-    def clipping_method(img, box, form='opencv'):
-        if form == 'opencv':
+    def clipping_method(img, box, format='opencv'):
+        if format == 'opencv':
             x_left, y_top, x_right, y_bot = int(box[0]), int(box[1]), int(box[2]), int(box[3])
 
-            x_left = min(max(x_left, 0), img.shape[-3])
-            y_top = min(max(y_top, 0), img.shape[-2])
-            x_right = min(max(x_right, 0), img.shape[-3] - x_left)
-            y_bot = min(max(y_bot, 0), img.shape[-2] - y_top)
+            x_left = min(max(x_left, 0), img.shape[-2])
+            y_top = min(max(y_top, 0), img.shape[-3])  # (h, w, 3)
+            x_right = min(max(x_right, 0), img.shape[-2])
+            y_bot = min(max(y_bot, 0), img.shape[-3])
 
             return [x_left, y_top, x_right, y_bot]
 
-        elif form == 'coco':
+        elif format == 'coco':
             x_left, y_top, width, height = int(box[0]), int(box[1]), int(box[2]), int(box[3])
 
             x_left = min(max(x_left, 0), img.shape[-3])
@@ -324,7 +355,7 @@ def clipping(img_list, boxes):
 
             return [x_left, y_top, width, height]
 
-        elif form == 'yolo':
+        elif format == 'yolo':
             x_center, y_center, width, height = int(box[0]), int(box[1]), int(box[2]), int(box[3])
 
             x_center = min(max(x_center, 0), img.shape[0])
@@ -335,6 +366,7 @@ def clipping(img_list, boxes):
             return [x_center, y_center, width, height]
 
     box_clipping = []
+
     for i in range(len(img_list)):
         if len(boxes[i]) > 1:
             img_list_map = np.expand_dims(img_list[i], axis=0)
@@ -343,14 +375,105 @@ def clipping(img_list, boxes):
 
         elif len(boxes[i]) == 1:
             if boxes[i][0] is not None:
-                box_clipping.append([clipping_method(img_list[i], box=boxes[i][0], form='opencv')])
+                box_clipping.append([clipping_method(img_list[i], box=boxes[i][0], format='opencv')])
 
             else:
                 box_clipping.append([[None]])
 
     return box_clipping
 
+def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
 
+    def crop_with_percent(img, box, percent=0):
+        x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
+
+        x_left -= percent * (x_right - x_left)
+        x_right += percent * (x_right - x_left)
+        y_top -= percent * (y_bot - y_top)
+        y_bot += percent * (y_bot - y_top)
+        target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
+
+        target_img = cv2.resize(target_img, (240, 300), interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
+
+        return np.array(target_img).astype('int16')
+
+    if purpose == 'input':
+        faces = []
+        for i in range(len(img_list)):
+            if len(box_clipping[i]) > 1:
+                img_list_map = np.expand_dims(img_list[i], axis=0)
+                img_list_map = np.repeat(img_list_map, repeats=len(box_clipping[i]), axis=0)
+                faces.append(list(map(crop_with_percent, img_list_map, box_clipping[i])))
+
+            elif len(box_clipping[i]) == 1:
+                faces.append([crop_with_percent(img_list[i], box_clipping[i][0])])
+
+    elif purpose == 'anchor':
+        faces = [crop_with_percent(img_list[i], box_clipping[i][0], percent) for i in range(len(img_list))]
+
+    return faces
+
+
+def vector_embedding(infer_model, img_list, purpose='input'):
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+    def extract_vector(batch):
+        batch = batch.to(device)
+        embed = infer_model(batch)
+        embed = embed.cpu().detach().numpy()
+        return embed
+
+    if purpose == 'anchor':
+        img_list = list(map(transform, img_list))
+        img_list = torch.stack(img_list, dim=0)
+
+        batch_size = 32
+        steps = math.ceil(len(img_list) / batch_size)
+        img_list = torch.split(img_list, steps)
+
+        vector_embeddings = list(map(extract_vector, img_list))
+        vector_embeddings = np.concatenate(vector_embeddings).reshape(-1, 512)
+
+    elif purpose == 'input':
+
+        vector_embeddings = []
+
+        for img in img_list:
+            mini_list = list(map(transform, img))
+            mini_list = torch.stack(mini_list, dim=0)
+
+            embedding = extract_vector(mini_list)
+
+            if embedding.shape[0] == 1:
+                embedding = list(embedding)
+                vector_embeddings.append(embedding)
+            else:
+                embedding = np.concatenate(embedding).reshape(-1, 512)
+                embedding = list(embedding)
+                vector_embeddings.append(embedding)
+
+    return vector_embeddings
+
+def get_knn(x, y):
+    knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean', algorithm='brute')
+    knn.fit(x, y)
+
+    return knn
+
+
+def knn_predict(model, embeddings):
+    predicted_ids = [list(model.predict(embedding)) for embedding in embeddings]
+
+    final_ids = []
+    for ids in predicted_ids:
+        collected_ids = np.array(ids)
+        collected_ids = np.array_split(collected_ids, len(ids))
+        collected_ids = [id.tolist() for id in collected_ids]
+        final_ids.append(collected_ids)
+
+    return final_ids
+
+  
 def face_detection(original_path, anchor_path):
     """
     This function performs face detection in the given image dataset.
@@ -370,11 +493,28 @@ def face_detection(original_path, anchor_path):
     """
 
     input_name, input_img = read_input_images(original_path, purpose='input')
+    anchor_label, anchor_img = read_anchor_images(anchor_path)
 
-    mtcnn = create_mtcnn_model()
-    input_boxes, _, _ = get_bounding_box(mtcnn, input_img, 32)
+    mtcnn, infer_model = get_model()
+
+    input_boxes, _, _ = get_bounding_box(mtcnn, input_img, 64)
+    anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, 64)
+
     input_boxes = clipping(input_img, input_boxes)
+    anchor_boxes = clipping(anchor_img, anchor_boxes)
 
-    df = pd.DataFrame({'filename': input_name, 'bboxes': input_boxes})
+    input_img, input_boxes, input_name = filter_images(input_name, input_img, input_boxes)
+    anchor_img, anchor_boxes, anchor_label = filter_images(anchor_label, anchor_img, anchor_boxes)
+
+    cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose='anchor')
+    cropped_img_input = cropping_face(input_img, input_boxes, purpose='input')
+    
+    anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose='anchor')
+    input_embed = vector_embedding(infer_model, cropped_img_input, purpose='input')
+
+    knn = get_knn(anchor_embed, anchor_label)
+    input_ids = knn_predict(knn, input_embed)
+
+    df = pd.DataFrame({'filename': input_name, 'bboxes': input_boxes, 'ids': input_ids})
 
     return df

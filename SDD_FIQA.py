@@ -45,7 +45,7 @@ def FIQA(df):
     filename = []
     for i in range(len(df)):
         if df["bboxes"][i][0] is not None:
-            input_data = get_target_bbox(os.path.join("test/img", df["filename"][i]), df["bboxes"][i], p=0.15)
+            input_data = get_target_bbox(os.path.join("test/original_folder", df["filename"][i]), df["bboxes"][i], p=0.15)
             score = []
             for j in input_data:
                 if j.shape[0] > 0 and j.shape[1] > 0:
