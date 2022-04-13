@@ -310,15 +310,15 @@ def transform(img):
 
 
 def filter_images(name, img_list, boxes):
-    discard_index = [i for i, x in enumerate(boxes) if x[0] == [None]]
-    if discard_index != [None]:
-        discard_name = [name[i] for i in discard_index]
+ #   discard_index = [i for i, x in enumerate(boxes) if x[0] == [None]]
+ #   if discard_index != [None]:
+ #       discard_name = [name[i] for i in discard_index]
 
     keep_index = [i for i, x in enumerate(boxes) if x[0] != [None]]
     img_final = [img_list[i] for i in keep_index]
     box_list_final = [boxes[i] for i in keep_index]
     name_final = [name[i] for i in keep_index]
-    return discard_name, np.array(img_final), box_list_final, name_final
+    return np.array(img_final), box_list_final, name_final
 
 
 def clipping(img_list, boxes):
@@ -503,8 +503,8 @@ def face_detection(original_path, anchor_path):
     input_boxes = clipping(input_img, input_boxes)
     anchor_boxes = clipping(anchor_img, anchor_boxes)
 
-    _, input_img, input_boxes, input_name = filter_images(input_name, input_img, input_boxes)
-    _, anchor_img, anchor_boxes, anchor_label = filter_images(anchor_label, anchor_img, anchor_boxes)
+    input_img, input_boxes, input_name = filter_images(input_name, input_img, input_boxes)
+    anchor_img, anchor_boxes, anchor_label = filter_images(anchor_label, anchor_img, anchor_boxes)
 
     cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose='anchor')
     cropped_img_input = cropping_face(input_img, input_boxes, purpose='input')
