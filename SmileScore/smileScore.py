@@ -7,7 +7,7 @@ import pandas as pd
 from misc.extract_bbox import *
 
 
-def load_model(model_path):
+def load_smile_model(model_path):
     model = load_model(model_path)
     model.compile(optimizer = tf.keras.optimizers.Adam(0.0001), 
                     loss = 'categorical_crossentropy',
@@ -15,12 +15,12 @@ def load_model(model_path):
     return model
 
   
-def get_smile_score(df, model):
+def get_smile_score(path, df, model):
     smile_score = []
     filename = []
     for i in range(len(df)):
         if df["bboxes"][i][0] is not None:
-            input_data = get_target_bbox(os.path.join("test/img", df["filename"][i]), df["bboxes"][i], p=0.15)
+            input_data = get_target_bbox(os.path.join(path, df["filename"][i]), df["bboxes"][i], p=0.15)
             score = []
             for j in input_data:
                 img = cv2.cvtColor(j, cv2.COLOR_BGR2RGB)
