@@ -31,9 +31,9 @@ def get_smile_score(path, df, model):
                 preditions = model.predict(img)
                 
                 score.append(preditions[0][0]*100)
-            filename.append(df["filename"][i])
-            smile_score.append(sum(score))
+            filename.append(os.path.join(path, df["filename"][i]))
+            smile_score.append(sum(score)/len(score))
     new_df = pd.DataFrame({'filename': filename, 'score': smile_score})
-    sorted_df = new_df.sort_values(by='score', ascending=False)
+    sorted_df = new_df.sort_values(by="score", ascending=False)
 
-    return sorted_df[filename]
+    return sorted_df

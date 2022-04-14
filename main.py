@@ -1,9 +1,12 @@
-import argparse
+print("-----Initializing-----")
 
+import argparse
+import time
 from SDD_FIQA import *
 from animations.animations import *
 from face_reg.detection import *
 from SmileScore.smileScore import *
+from animations.make_video import *
 
 
 def parse_args():
@@ -32,7 +35,7 @@ def parse_args():
                         help='Number of images will be presented in the video',
                         type=int,
                         required=False,
-                        default=10)
+                        default=6)
 
     parser.add_argument('--effect_speed',
                         help='Video args',
@@ -51,27 +54,42 @@ def parse_args():
                         type=int,
                         required=False,
                         default=75)
+                        
+    parser.add_argument('--fraction',
+                        help='Resize images',
+                        type=float,
+                        required=False,
+                        default=1)
 
     args = parser.parse_args()
     return args
 
 
-def load_models():
-    smile_model = load_model(r"")
-    return smile_model
-
-
 def main():
+    start = time.time()
     args = parse_args()
+    print("-----Starting face detection module-----")
     df = face_detection(args.original_dataset_path, args.anchor_dataset_path)
-    df = FIQA(df)
-    print(df.head())
+    end = time.time()
+    print(f"-----Done face detection. Time since start {end-start}s-----")
+    print("-----Starting face image quality assessment module-----")
+    df = FIQA(df=df, path=args.original_dataset_path)
+    end = time.time()
+    print(f"-----Done face image quality assessment. Time since start {end-start}s-----")
+    print("-----Starting smile score assessment module-----")
     smile_model = load_smile_model(r"model/smile_score.h5")
-    filename_list = get_smile_score(args.original_dataset_path, df, smile_model)  # return ordered image name
-    print(filename_list)
-    # img_list = process_images_for_vid(df, k=number_of_images, effect_speed=args.effect_speed, duration=args.duration,
-    #                                   fps=args.fps)
-    # make_video(img_list=img_list, output_path=output_path)
+    df = get_smile_score(path=args.original_dataset_path, df=df, model=smile_model)
+    end = time.time()
+    print(f"-----Done smile score assessment. Time since start {end-start}s-----")
+    print("-----Starting create video-----")
+    # img_list = process_images_for_vid(list(df["filename"])[0:args.number_of_images], effect_speed=args.effect_speed, duration=args.duration,
+                                      # fps=args.fps, fraction=args.fraction)
+    print(list(df["filename"])[0:args.number_of_images])
+    make_video(img_list=list(df["filename"])[0:args.number_of_images], output_path=args.output_path, 
+               effect_speed=args.effect_speed, duration=args.duration, fps=args.fps, fraction=args.fraction)
+    end = time.time()
+    print(f"-----Done create video. Time since start {end-start}s-----")
+    print("-----DONE-----")
 
 
 if __name__ == '__main__':
