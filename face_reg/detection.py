@@ -7,6 +7,8 @@ import pandas as pd
 import math
 import os
 from sklearn.neighbors import KNeighborsClassifier
+from numpy import dot
+from numpy.linalg import norm
 
 def read_images(path):
     img = cv2.imread(path, 1)
@@ -473,7 +475,101 @@ def knn_predict(model, embeddings):
 
     return final_ids
 
-  
+def names_to_integers(list_name):
+  unique_names = np.unique(list_name)
+  label_to_int = {label:i for i, label in enumerate(unique_names)}
+  int_to_label = {i:label for i, label in enumerate(unique_names)}
+  mapped_name = np.array([label_to_int[name] for name in list_name]).astype('int16')
+    
+  return int_to_label, mapped_name
+
+
+def euclidean_distance(row1, row2):
+  euclidean_distance = np.linalg.norm(row1 -row2[:-1])
+
+  return (euclidean_distance, int(row2[-1]))
+
+
+def cosine_distance(row1, row2):
+  return dot(row1, row2)/(norm(row1)*norm(row2))
+
+
+# Locate the most similar neighbors
+def get_neighbors(train, test_row, num_neighbors):
+  test_rows = np.array([test_row] * len(train))
+  euclidean_distances = list(map(euclidean_distance, test_rows, train))
+  euclidean_distance_index  = euclidean_distances.copy()
+  euclidean_distance_index = sorted(range(len(euclidean_distance_index)), key=lambda tup: euclidean_distance_index[tup])
+  euclidean_distances.sort(key=lambda tup: tup[0])
+  neighbors = list()
+  for i in range(num_neighbors):
+    cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
+    if cos_dist <= 0.7:
+      neighbors.append(None)
+    else:
+      neighbors.append(euclidean_distances[i][1])
+  return neighbors
+
+
+# Make a prediction with neighbors
+def classification(mapping, train, test_row, num_neighbors):
+  neighbors = get_neighbors(train, test_row, num_neighbors)
+  output_values = [row for row in neighbors]
+  prediction = max(set(output_values), key=output_values.count)
+  if prediction is not None:
+    prediction = mapping[prediction]
+  return prediction
+
+
+# KNN Algorithm
+def k_nearest_neighbors(label, train, test, num_neighbors):
+  int_to_label, anchor_mapped_label = names_to_integers(label)
+
+  new_shape = list(train.shape)
+  new_shape[-1] +=1 
+  new_shape = tuple(new_shape)
+
+  anchor_mega = np.empty(new_shape)
+  for i in range(len(anchor_mega)):
+    anchor_mega[i] = np.append(train[i], anchor_mapped_label[i])
+
+  predictions = list()
+  for row in test:
+    output = classification(int_to_label, anchor_mega, row, num_neighbors)
+    predictions.append(output)
+
+  return predictions
+
+def KNN_prediction(anchor_label, anchor_embed, input_embed):
+  predicted_ids = [k_nearest_neighbors(anchor_label, anchor_embed, embed, 1) for embed in input_embed]
+
+  final_ids = []
+  for ids in predicted_ids:
+    collected_ids = np.array(ids)
+    collected_ids = np.array_split(collected_ids, len(ids))
+    collected_ids = [id.tolist() for id in collected_ids]
+    final_ids.append(collected_ids)
+
+  return final_ids
+
+def clear_results(names, boxes, ids, name):
+
+  for i in range(len(ids)):
+    keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind] != [None] ]
+    boxes[i]= [boxes[i][ind] for ind in keep_index]
+    ids[i] = [ids[i][ind] for ind in keep_index]
+
+  new_names = [names[i] for i in range(len(names)) if boxes[i] != []]
+  new_boxes = list(filter(None, boxes))
+  new_ids = list(filter(None, ids))
+
+  df_new = pd.DataFrame({'Filename' : new_names, 'Bboxes': new_boxes, 'Ids': new_ids})
+
+  find_index = [i for i in range(len(new_ids)) if [name] in new_ids[i]]
+  df_new = df_new.iloc[find_index]
+  return df_new
+
+
 def face_detection(original_path, anchor_path):
     """
     This function performs face detection in the given image dataset.
@@ -512,9 +608,8 @@ def face_detection(original_path, anchor_path):
     anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose='anchor')
     input_embed = vector_embedding(infer_model, cropped_img_input, purpose='input')
 
-    knn = get_knn(anchor_embed, anchor_label)
-    input_ids = knn_predict(knn, input_embed)
+    final_ids = KNN_prediction(anchor_label, anchor_embed, input_embed)
 
-    df = pd.DataFrame({'filename': input_name, 'bboxes': input_boxes, 'ids': input_ids})
-    
+    df = clear_results(input_name, input_boxes, final_ids, 'Dimitri_Perricos')
+
     return df
