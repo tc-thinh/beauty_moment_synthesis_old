@@ -7,7 +7,8 @@ from animations.animations import *
 from face_reg.detection import *
 from SmileScore.smileScore import *
 from animations.make_video import *
-
+import warnings
+warnings.filterwarnings('ignore')
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Face Detection and Recognition',
