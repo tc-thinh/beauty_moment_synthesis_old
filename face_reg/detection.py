@@ -570,7 +570,7 @@ def clear_results(names, boxes, ids, name):
   return df_new
 
 
-def face_detection(original_path, anchor_path):
+def face_detection(original_path, anchor_path, finding_name):
     """
     This function performs face detection in the given image dataset.
 
@@ -610,6 +610,6 @@ def face_detection(original_path, anchor_path):
 
     final_ids = KNN_prediction(anchor_label, anchor_embed, input_embed)
 
-    df = clear_results(input_name, input_boxes, final_ids, 'Dimitri_Perricos')
+    df = clear_results(input_name, input_boxes, final_ids, finding_name)
 
     return df
