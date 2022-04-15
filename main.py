@@ -70,7 +70,7 @@ def main():
     start = time.time()
     args = parse_args()
     print("-----Starting face detection module-----")
-    df = face_detection(args.original_dataset_path, args.anchor_dataset_path)
+    df = face_detection(args.original_dataset_path, args.anchor_dataset_path, 'Gina_Lollobrigida')
     end = time.time()
     print(f"-----Done face detection. Time since start {end-start}s-----")
     print("-----Starting face image quality assessment module-----")
