@@ -62,6 +62,11 @@ def parse_args():
                         required=False,
                         default=1)
 
+    parser.add_argument('--find_person',
+                        help='Find the person',
+                        type= str,
+                        required=True,
+                        default=None)
     args = parser.parse_args()
     return args
 
@@ -70,7 +75,7 @@ def main():
     start = time.time()
     args = parse_args()
     print("-----Starting face detection module-----")
-    df = face_detection(args.original_dataset_path, args.anchor_dataset_path, 'Gina_Lollobrigida')
+    df = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
     end = time.time()
     print(f"-----Done face detection. Time since start {end-start}s-----")
     print("-----Starting face image quality assessment module-----")
