@@ -16,7 +16,7 @@ def read_images(path):
   return img
 
 
-def resize_input_images(img_list, fraction = 0.25):
+def resize_input_images(img_list, fraction = 1):
   all_width = [img_list[i].shape[-3] for i in range(len(img_list))]
   mean_width = int(sum(all_width)/len(all_width) * fraction )
   all_height = [img_list[i].shape[-2] for i in range(len(img_list))]
