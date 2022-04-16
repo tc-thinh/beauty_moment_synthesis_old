@@ -44,14 +44,13 @@ def FIQA(df, path):
     bbox = []
     filename = []
     for i in range(len(df)):
-        if df["bboxes"][i][0] is not None:
-            input_data = get_target_bbox(os.path.join(path, df["filename"][i]), df["bboxes"][i], p=0.15)
-            score = []
-            for j in input_data:
-                if j.shape[0] > 0 and j.shape[1] > 0:
-                    img = process_fiqa_image(j).to(device)
-                    pred_score = net(img).data.cpu().numpy().squeeze()
-                    score.append(pred_score)
+        input_data = get_target_bbox(os.path.join(path, df["filename"][i]), df["bboxes"][i], p=0.15)
+        score = []
+        for j in input_data:
+            if j.shape[0] > 0 and j.shape[1] > 0:
+                img = process_fiqa_image(j).to(device)
+                pred_score = net(img).data.cpu().numpy().squeeze()
+                score.append(pred_score)
         try:
             if max(score) > 40:
                 filename.append(df["filename"][i])
