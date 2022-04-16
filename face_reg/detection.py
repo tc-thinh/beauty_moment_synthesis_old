@@ -11,9 +11,21 @@ from numpy import dot
 from numpy.linalg import norm
 
 def read_images(path):
-    img = cv2.imread(path, 1)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return img
+  img = cv2.imread(path, 1)
+  img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+  return img
+
+
+def resize_input_images(img_list, fraction = 0.25):
+  all_width = [img_list[i].shape[-3] for i in range(len(img_list))]
+  mean_width = int(sum(all_width)/len(all_width) * fraction )
+  all_height = [img_list[i].shape[-2] for i in range(len(img_list))]
+  mean_height = int(sum(all_height)/len(all_height) * fraction )
+
+  img_list = np.stack([cv2.resize(img_list[i], (mean_height, mean_width)) for i in range(len(img_list))], axis = 0)
+
+  return img_list
+
 
 def resize_anchor_images(path):
   img = cv2.imread(path, 1)
@@ -22,7 +34,8 @@ def resize_anchor_images(path):
 
   return img
 
-def read_input_images(path, purpose='anchor'):
+
+def read_input_images(path, purpose='anchor', resize_for_input = False):
     """
     This function reads all the images in the input dataset.
 
@@ -44,7 +57,8 @@ def read_input_images(path, purpose='anchor'):
 
     if purpose == 'input':
         img_list = list(map(read_images, all_path))
-        return file_name, np.array(img_list)
+        img_list = resize_input_images(img_list)
+        return file_name, img_list
 
     elif purpose == 'anchor':
         img_list = list(map(resize_anchor_images, all_path))
@@ -82,7 +96,7 @@ def read_anchor_images(path):
             img_label.append(folder_name[ind])
             img_flatten_list.append(img)
 
-    img_flatten_list = np.array(img_flatten_list).reshape(-1, img_flatten_list[0].shape[-3], img_flatten_list[0].shape[-2], 3)
+    img_flatten_list = np.stack(img_flatten_list, axis =0)
     img_label = np.array(img_label).reshape(-1, )
 
     return img_label, img_flatten_list
