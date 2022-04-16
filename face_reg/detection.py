@@ -10,32 +10,33 @@ from sklearn.neighbors import KNeighborsClassifier
 from numpy import dot
 from numpy.linalg import norm
 
+
 def read_images(path):
-  img = cv2.imread(path, 1)
-  img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-  return img
+    img = cv2.imread(path, 1)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    return img
 
 
-def resize_input_images(img_list, fraction = 1):
-  all_width = [img_list[i].shape[-3] for i in range(len(img_list))]
-  mean_width = int(sum(all_width)/len(all_width) * fraction )
-  all_height = [img_list[i].shape[-2] for i in range(len(img_list))]
-  mean_height = int(sum(all_height)/len(all_height) * fraction )
+def resize_input_images(img_list, fraction=1):
+    all_width = [img_list[i].shape[-3] for i in range(len(img_list))]
+    mean_width = int(sum(all_width) / len(all_width) * fraction)
+    all_height = [img_list[i].shape[-2] for i in range(len(img_list))]
+    mean_height = int(sum(all_height) / len(all_height) * fraction)
 
-  img_list = np.stack([cv2.resize(img_list[i], (mean_height, mean_width)) for i in range(len(img_list))], axis = 0)
+    img_list = np.stack([cv2.resize(img_list[i], (mean_height, mean_width)) for i in range(len(img_list))], axis=0)
 
-  return img_list
+    return img_list
 
 
 def resize_anchor_images(path):
-  img = cv2.imread(path, 1)
-  img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-  img = cv2.resize(img, (400, 600))
+    img = cv2.imread(path, 1)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = cv2.resize(img, (400, 600))
 
-  return img
+    return img
 
 
-def read_input_images(path, purpose='anchor', resize_for_input = False):
+def read_input_images(path, purpose='anchor', different_sizes=True):
     """
     This function reads all the images in the input dataset.
 
@@ -57,7 +58,8 @@ def read_input_images(path, purpose='anchor', resize_for_input = False):
 
     if purpose == 'input':
         img_list = list(map(read_images, all_path))
-        img_list = resize_input_images(img_list)
+        if different_sizes:
+            img_list = resize_input_images(img_list)
         return file_name, img_list
 
     elif purpose == 'anchor':
@@ -96,13 +98,13 @@ def read_anchor_images(path):
             img_label.append(folder_name[ind])
             img_flatten_list.append(img)
 
-    img_flatten_list = np.stack(img_flatten_list, axis =0)
+    img_flatten_list = np.stack(img_flatten_list, axis=0)
     img_label = np.array(img_label).reshape(-1, )
 
     return img_label, img_flatten_list
 
 
-def create_mtcnn_model():
+def create_facenet_models():
     """
   This function returns an MTCNN model base - which was used to detect human
   faces in images.
@@ -125,6 +127,7 @@ def create_mtcnn_model():
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print('Used device: {}'.format(device))
+    infer_model = InceptionResnetV1(pretrained='vggface2', device=device).eval()
 
     mtcnn = MTCNN(
         image_size=160, margin=0, min_face_size=50,
@@ -132,17 +135,10 @@ def create_mtcnn_model():
         device=device, selection_method='largest_over_threshold'
     )
 
-    if mtcnn is not None:
-        print('Successfully create a MTCNN model base')
+    if mtcnn is not None and infer_model is not None:
+        print('Successfully create a MTCNN + InceptionResnet model base')
     else:
-        print('Fail to create a MTCNN model base')
-
-    return mtcnn
-
-
-def get_model():
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    infer_model = InceptionResnetV1(pretrained='vggface2', device=device).eval()
+        print('Fail to create a MTCNN + InceptionResnet model base')
 
     mtcnn = create_mtcnn_model()
     mtcnn.keep_all = False
@@ -229,6 +225,7 @@ def get_bounding_box(mtcnn_model, frames, batch_size=32):
                 landmark_list.append([None])
 
     return bboxes_pred_list, box_probs_list, landmark_list
+
 
 def convert_bounding_box(box, input_type, change_to):
     """
@@ -333,11 +330,12 @@ def transform(img):
 
 
 def filter_images(name, img_list, boxes):
- #   discard_index = [i for i, x in enumerate(boxes) if x[0] == [None]]
- #   if discard_index != [None]:
- #       discard_name = [name[i] for i in discard_index]
+    #   discard_index = [i for i, x in enumerate(boxes) if x[0] == [None]]
+    #   if discard_index != [None]:
+    #       discard_name = [name[i] for i in discard_index]
 
     keep_index = [i for i, x in enumerate(boxes) if x[0] != [None]]
+
     img_final = [img_list[i] for i in keep_index]
     box_list_final = [boxes[i] for i in keep_index]
     name_final = [name[i] for i in keep_index]
@@ -405,8 +403,8 @@ def clipping(img_list, boxes):
 
     return box_clipping
 
-def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
 
+def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
     def crop_with_percent(img, box, percent=0):
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
@@ -477,6 +475,7 @@ def vector_embedding(infer_model, img_list, purpose='input'):
 
     return vector_embeddings
 
+
 def get_knn(x, y):
     knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean', algorithm='brute')
     knn.fit(x, y)
@@ -496,102 +495,105 @@ def knn_predict(model, embeddings):
 
     return final_ids
 
+
 def names_to_integers(list_name):
-  unique_names = np.unique(list_name)
-  label_to_int = {label:i for i, label in enumerate(unique_names)}
-  int_to_label = {i:label for i, label in enumerate(unique_names)}
-  mapped_name = np.array([label_to_int[name] for name in list_name]).astype('int16')
-    
-  return int_to_label, mapped_name
+    unique_names = np.unique(list_name)
+    label_to_int = {label: i for i, label in enumerate(unique_names)}
+    int_to_label = {i: label for i, label in enumerate(unique_names)}
+    mapped_name = np.array([label_to_int[name] for name in list_name]).astype('int16')
+
+    return int_to_label, mapped_name
 
 
 def euclidean_distance(row1, row2):
-  euclidean_distance = np.linalg.norm(row1 -row2[:-1])
+    euclidean_dist = np.linalg.norm(row1 - row2[:-1])
 
-  return (euclidean_distance, int(row2[-1]))
+    return (euclidean_dist, int(row2[-1]))
 
 
 def cosine_distance(row1, row2):
-  return dot(row1, row2)/(norm(row1)*norm(row2))
+    return dot(row1, row2) / (norm(row1) * norm(row2))
 
 
 # Locate the most similar neighbors
 def get_neighbors(train, test_row, num_neighbors):
-  test_rows = np.array([test_row] * len(train))
-  euclidean_distances = list(map(euclidean_distance, test_rows, train))
-  euclidean_distance_index  = euclidean_distances.copy()
-  euclidean_distance_index = sorted(range(len(euclidean_distance_index)), key=lambda tup: euclidean_distance_index[tup])
-  euclidean_distances.sort(key=lambda tup: tup[0])
-  neighbors = list()
-  for i in range(num_neighbors):
-    cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
-    if cos_dist <= 0.7:
-      neighbors.append(None)
-    else:
-      neighbors.append(euclidean_distances[i][1])
-  return neighbors
+    test_rows = np.array([test_row] * len(train))
+    euclidean_distances = list(map(euclidean_distance, test_rows, train))
+    euclidean_distance_index = euclidean_distances.copy()
+    euclidean_distance_index = sorted(range(len(euclidean_distance_index)),
+                                      key=lambda tup: euclidean_distance_index[tup])
+    euclidean_distances.sort(key=lambda tup: tup[0])
+    neighbors = list()
+    for i in range(num_neighbors):
+        cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
+        if cos_dist <= 0.7:
+            neighbors.append(None)
+        else:
+            neighbors.append(euclidean_distances[i][1])
+    return neighbors
 
 
 # Make a prediction with neighbors
 def classification(mapping, train, test_row, num_neighbors):
-  neighbors = get_neighbors(train, test_row, num_neighbors)
-  output_values = [row for row in neighbors]
-  prediction = max(set(output_values), key=output_values.count)
-  if prediction is not None:
-    prediction = mapping[prediction]
-  return prediction
+    neighbors = get_neighbors(train, test_row, num_neighbors)
+    output_values = [row for row in neighbors]
+    prediction = max(set(output_values), key=output_values.count)
+    if prediction is not None:
+        prediction = mapping[prediction]
+    return prediction
 
 
 # KNN Algorithm
 def k_nearest_neighbors(label, train, test, num_neighbors):
-  int_to_label, anchor_mapped_label = names_to_integers(label)
+    int_to_label, anchor_mapped_label = names_to_integers(label)
 
-  new_shape = list(train.shape)
-  new_shape[-1] +=1 
-  new_shape = tuple(new_shape)
+    new_shape = list(train.shape)
+    new_shape[-1] += 1
+    new_shape = tuple(new_shape)
 
-  anchor_mega = np.empty(new_shape)
-  for i in range(len(anchor_mega)):
-    anchor_mega[i] = np.append(train[i], anchor_mapped_label[i])
+    anchor_mega = np.empty(new_shape)
+    for i in range(len(anchor_mega)):
+        anchor_mega[i] = np.append(train[i], anchor_mapped_label[i])
 
-  predictions = list()
-  for row in test:
-    output = classification(int_to_label, anchor_mega, row, num_neighbors)
-    predictions.append(output)
+    predictions = list()
+    for row in test:
+        output = classification(int_to_label, anchor_mega, row, num_neighbors)
+        predictions.append(output)
 
-  return predictions
+    return predictions
 
-def KNN_prediction(anchor_label, anchor_embed, input_embed):
-  predicted_ids = [k_nearest_neighbors(anchor_label, anchor_embed, embed, 1) for embed in input_embed]
 
-  final_ids = []
-  for ids in predicted_ids:
-    collected_ids = np.array(ids)
-    collected_ids = np.array_split(collected_ids, len(ids))
-    collected_ids = [id.tolist() for id in collected_ids]
-    final_ids.append(collected_ids)
+def knn_prediction(anchor_label, anchor_embed, input_embed):
+    predicted_ids = [k_nearest_neighbors(anchor_label, anchor_embed, embed, 1) for embed in input_embed]
 
-  return final_ids
+    final_ids = []
+    for ids in predicted_ids:
+        collected_ids = np.array(ids)
+        collected_ids = np.array_split(collected_ids, len(ids))
+        collected_ids = [id.tolist() for id in collected_ids]
+        final_ids.append(collected_ids)
+
+    return final_ids
+
 
 def clear_results(names, boxes, ids, name):
+    for i in range(len(ids)):
+        keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind] != [None]]
+        boxes[i] = [boxes[i][ind] for ind in keep_index]
+        ids[i] = [ids[i][ind] for ind in keep_index]
 
-  for i in range(len(ids)):
-    keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind] != [None] ]
-    boxes[i]= [boxes[i][ind] for ind in keep_index]
-    ids[i] = [ids[i][ind] for ind in keep_index]
+    new_names = [names[i] for i in range(len(names)) if boxes[i] != []]
+    new_boxes = list(filter(None, boxes))
+    new_ids = list(filter(None, ids))
 
-  new_names = [names[i] for i in range(len(names)) if boxes[i] != []]
-  new_boxes = list(filter(None, boxes))
-  new_ids = list(filter(None, ids))
+    df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids})
+    if name is not None:
+        find_index = [i for i in range(len(new_ids)) if [name] in new_ids[i]]
+        df_new = df_new.iloc[find_index]
 
-  df_new = pd.DataFrame({'filename' : new_names, 'bboxes': new_boxes, 'ids': new_ids})
-  if name is not None:
-    find_index = [i for i in range(len(new_ids)) if [name] in new_ids[i]]
-    df_new = df_new.iloc[find_index]
-    
-  df_new = df_new.reset_index(drop=True)
-    
-  return df_new
+    df_new = df_new.reset_index(drop=True)
+
+    return df_new
 
 
 def face_detection(original_path, anchor_path, finding_name):
@@ -615,7 +617,7 @@ def face_detection(original_path, anchor_path, finding_name):
     input_name, input_img = read_input_images(original_path, purpose='input')
     anchor_label, anchor_img = read_anchor_images(anchor_path)
 
-    mtcnn, infer_model = get_model()
+    mtcnn, infer_model = create_facenet_models()
 
     input_boxes, _, _ = get_bounding_box(mtcnn, input_img, 64)
     anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, 64)
@@ -628,12 +630,12 @@ def face_detection(original_path, anchor_path, finding_name):
 
     cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose='anchor')
     cropped_img_input = cropping_face(input_img, input_boxes, purpose='input')
-    
+
     anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose='anchor')
     input_embed = vector_embedding(infer_model, cropped_img_input, purpose='input')
 
-    final_ids = KNN_prediction(anchor_label, anchor_embed, input_embed)
+    final_ids = knn_prediction(anchor_label, anchor_embed, input_embed)
 
     df = clear_results(input_name, input_boxes, final_ids, finding_name)
 
-    return df
+    return df, input_image #return input images để không phải đọc hình nhiều lần
