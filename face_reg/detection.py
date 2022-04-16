@@ -589,6 +589,8 @@ def clear_results(names, boxes, ids, name):
     find_index = [i for i in range(len(new_ids)) if [name] in new_ids[i]]
     df_new = df_new.iloc[find_index]
     
+  df_new = df_new.reset_index(drop=True)
+    
   return df_new
 
 
