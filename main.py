@@ -93,7 +93,7 @@ def main():
         df = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
         
         f.write(str(list(df["filename"])))
-        f.write(str(list(df["bbox"])))
+        f.write(str(list(df["bboxes"])))
         f.write(str(list(df["ids"])))
         
         end = time.time()
