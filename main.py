@@ -80,13 +80,12 @@ def parse_args():
 
 
 def main():
+    args = parse_args()
     if args.log:
         now = datetime.datetime.now()
         f = open(f"{now.year}{now.month}{now.day}_{now.hour}{now.minute}{now.second}_log.txt", "w+")
         
         start = time.time()
-        
-        args = parse_args()
         
         print("-----Starting face detection module-----")
         f.write("-----Starting face detection module-----")
