@@ -563,7 +563,7 @@ def clear_results(names, boxes, ids, name):
   new_boxes = list(filter(None, boxes))
   new_ids = list(filter(None, ids))
 
-  df_new = pd.DataFrame({'Filename' : new_names, 'Bboxes': new_boxes, 'Ids': new_ids})
+  df_new = pd.DataFrame({'filename' : new_names, 'bboxes': new_boxes, 'ids': new_ids})
   if name is not None:
     find_index = [i for i in range(len(new_ids)) if [name] in new_ids[i]]
     df_new = df_new.iloc[find_index]
