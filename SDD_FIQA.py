@@ -60,5 +60,5 @@ def FIQA(df, path):
         except:
             pass
 
-    new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox})
+    new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox, "fiqa_score": fiqa_score})
     return new_df
