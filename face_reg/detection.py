@@ -15,6 +15,12 @@ def read_images(path):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
 
+def resize_anchor_images(path):
+  img = cv2.imread(path, 1)
+  img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+  img = cv2.resize(img, (400, 400))
+
+  return img
 
 def read_input_images(path, purpose='anchor'):
     """
@@ -35,12 +41,13 @@ def read_input_images(path, purpose='anchor'):
     """
     all_path = [os.path.join(path, name) for name in os.listdir(path)]
     file_name = [name for name in os.listdir(path)]
-    img_list = list(map(read_images, all_path))
 
     if purpose == 'input':
+        img_list = list(map(read_images, all_path))
         return file_name, np.array(img_list)
 
     elif purpose == 'anchor':
+        img_list = list(map(resize_anchor_images, all_path))
         return img_list
 
 
