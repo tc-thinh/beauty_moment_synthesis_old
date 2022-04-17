@@ -140,7 +140,6 @@ def create_facenet_models():
     else:
         print('Fail to create a MTCNN + InceptionResnet model base')
 
-    mtcnn = create_mtcnn_model()
     mtcnn.keep_all = False
 
     return mtcnn, infer_model
