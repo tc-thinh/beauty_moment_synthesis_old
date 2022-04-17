@@ -637,4 +637,4 @@ def face_detection(original_path, anchor_path, finding_name):
 
     df = clear_results(input_name, input_boxes, final_ids, finding_name)
 
-    return df, input_image #return input images để không phải đọc hình nhiều lần
+    return df, input_img #return input images để không phải đọc hình nhiều lần
