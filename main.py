@@ -8,9 +8,9 @@ from face_reg.detection import *
 from SmileScore.smileScore import *
 from animations.make_video import *
 import datetime
-import os
+import warnings
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+warnings.filters('ignore')
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Face Detection and Recognition',
