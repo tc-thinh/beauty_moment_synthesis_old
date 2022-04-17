@@ -1,7 +1,8 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 from keras.models import load_model
 import cv2
-import os
 import numpy as np
 import pandas as pd
 from misc.extract_bbox import *
