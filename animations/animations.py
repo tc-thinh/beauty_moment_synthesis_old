@@ -186,6 +186,48 @@ def fade_animation(img_list, w, h, fps=30, effect_speed=2, duration=1):
     return frames
 
 
+def extract_final_H(opencv_bbox, W, H):
+    x, y, w, h = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="coco")
+    
+    # All points are in format [cols, rows]
+    pt_A, pt_B, pt_C, pt_D = [x, y], [x, y+h], [x+w, y+h], [x+w, y]
+    
+    input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
+    output_pts = np.float32([[0, 0],
+                            [0, H - 1],
+                            [W - 1, H - 1],
+                            [W - 1, 0]])
+    
+    M = cv2.getPerspectiveTransform(input_pts, output_pts)
+    
+    return M
+    
+    
+def zoom_in_animation(img, W, H, opencv_bbox, fps = 30, duration = 1): 
+    
+    # x, y, w, h = convert_bounding_box(box=open_cv_bbox, input_type="opencv", change_to="coco")
+    final_H = np.matrix.round(extract_final_H(opencv_bbox=opencv_bbox, W=W, H=H), decimals=5, out=None)
+    
+    frames = []
+    
+    j=0
+    f = duration*fps
+    for k in range(0, f+1, 1):
+        result = img.copy()
+        
+        _H = np.array([[1+k*(final_H[0][0]-1)/f, 0, k*(final_H[0][2])/f],
+                      [0, 1+k*(final_H[1][1]-1)/f, k*(final_H[1][2])/f],
+                      [0, 0, 1]]
+                    )
+        
+        result = cv2.warpPerspective(img, _H, (W, H), flags=cv2.INTER_LINEAR)
+
+        frames.append(result)
+        j += 1
+                
+    return frames
+
+
 def extract_vid(frames, output_path, w=500, h=500, fps=30):
     out = cv2.VideoWriter(r"{}".format(output_path), cv2.VideoWriter_fourcc(*'DIVX'), fps, (w, h))
 

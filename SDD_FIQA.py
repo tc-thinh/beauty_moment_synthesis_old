@@ -51,6 +51,7 @@ def FIQA(df, path):
                 img = process_fiqa_image(j).to(device)
                 pred_score = net(img).data.cpu().numpy().squeeze()
                 score.append(pred_score)
+                print(pred_score)
         try:
             if max(score) > 40:
                 filename.append(df["filename"][i])
