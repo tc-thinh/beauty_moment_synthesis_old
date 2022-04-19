@@ -99,3 +99,31 @@ def get_target_bbox(img_path, bboxes, p=0.1):
             data.append(img[y - int(p * w):y + w + int(p * w), x - int(p * h):x + h + int(p * h)])  # target box
 
     return data
+
+
+def zoom_rescale_bbox(coco_bbox, W, H):
+    # input: coco_bbox -> output: opencv_bbox
+    x, y, w, h = coco_bbox
+    x_top, x_bot, y_top, y_bot = convert_bounding_box(box=bbox, input_type="coco", change_to="opencv")
+    if h >= w:
+        S = H/h  # scale
+        _w = int(W/S)
+        _deltaW = _w - w
+        if x_top - _deltaW/2 < 0:
+            return S, [0, y_top, x_bot+_deltaW-x_top, y_bot]
+        elif x_bot + _deltaW/2 > W:
+            return S, [x_top + _deltaW - (W-x_bot)-1, y_top, W-1, y_bot]
+        else:
+            return S, [int(x_top-_deltaW/2), y_top, int(x_bot+_deltaW/2), y_bot]
+        
+    elif w > h:
+        S = W/w
+        _h = int(H/S)
+        print(_h)
+        _deltaH = _h - h
+        if y_top - _deltaH/2 < 0:
+            return S, [x_top, 0, x_bot, y_bot+_deltaH-y_top]
+        elif y_top + _deltaH/2 > H:
+            return S, [x_top, y_top+_deltaH-(H-y_bot)-1, x_bot, H-1]
+        else:
+            return S, [x_top, int(y-_deltaH/2), x_bot, int(y+_deltaH/2)]
