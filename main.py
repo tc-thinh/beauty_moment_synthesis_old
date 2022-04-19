@@ -66,7 +66,7 @@ def parse_args():
 
     parser.add_argument('--find_person',
                         help='Find the person',
-                        type=str,
+                        type=list,
                         required=False,
                         default=None)
                         
