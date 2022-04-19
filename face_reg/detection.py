@@ -475,32 +475,11 @@ def vector_embedding(infer_model, img_list, purpose='input'):
     return vector_embeddings
 
 
-def get_knn(x, y):
-    knn = KNeighborsClassifier(n_neighbors=1, metric='euclidean', algorithm='brute')
-    knn.fit(x, y)
-
-    return knn
-
-
-def knn_predict(model, embeddings):
-    predicted_ids = [list(model.predict(embedding)) for embedding in embeddings]
-
-    final_ids = []
-    for ids in predicted_ids:
-        collected_ids = np.array(ids)
-        collected_ids = np.array_split(collected_ids, len(ids))
-        collected_ids = [id.tolist() for id in collected_ids]
-        final_ids.append(collected_ids)
-
-    return final_ids
-
-
 def names_to_integers(list_name):
     unique_names = np.unique(list_name)
     label_to_int = {label: i for i, label in enumerate(unique_names)}
     int_to_label = {i: label for i, label in enumerate(unique_names)}
     mapped_name = np.array([label_to_int[name] for name in list_name]).astype('int16')
-
     return int_to_label, mapped_name
 
 
@@ -523,23 +502,32 @@ def get_neighbors(train, test_row, num_neighbors):
                                       key=lambda tup: euclidean_distance_index[tup])
     euclidean_distances.sort(key=lambda tup: tup[0])
     neighbors = list()
+    cosine_scores = list()
     for i in range(num_neighbors):
         cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
-        if cos_dist <= 0.8:
+        if cos_dist < 0.75:
             neighbors.append(None)
+            cosine_scores.append(None)
         else:
             neighbors.append(euclidean_distances[i][1])
-    return neighbors
+            cosine_scores.append(cos_dist)
+    return neighbors, cosine_scores
 
 
 # Make a prediction with neighbors
 def classification(mapping, train, test_row, num_neighbors):
-    neighbors = get_neighbors(train, test_row, num_neighbors)
-    output_values = [row for row in neighbors]
-    prediction = max(set(output_values), key=output_values.count)
-    if prediction is not None:
+    neighbors, cosine_scores = get_neighbors(train, test_row, num_neighbors)
+    output_values = [row for row in neighbors if row is not None]
+    if output_values:
+        prediction = max(set(output_values), key=output_values.count)
+        pred_index = [i for i in range(len(output_values)) if output_values[i] == prediction]
+        cosine_score = max([cosine_scores[i] for i in pred_index])
         prediction = mapping[prediction]
-    return prediction
+    else:
+        prediction = None
+        cosine_score = None
+
+    return [prediction], [cosine_score]
 
 
 # KNN Algorithm
@@ -555,44 +543,57 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
         anchor_mega[i] = np.append(train[i], anchor_mapped_label[i])
 
     predictions = list()
+    cosine_prediction = list()
     for row in test:
-        output = classification(int_to_label, anchor_mega, row, num_neighbors)
+        output, score = classification(int_to_label, anchor_mega, row, num_neighbors)
         predictions.append(output)
+        cosine_prediction.append(score)
 
-    return predictions
+    return predictions, cosine_prediction
 
 
 def knn_prediction(anchor_label, anchor_embed, input_embed):
-    predicted_ids = [k_nearest_neighbors(anchor_label, anchor_embed, embed, 1) for embed in input_embed]
+    predicted_ids, predicted_scores = map(list,
+                                          zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed, 8) for embed in
+                                                input_embed]))  # list comprehension returns multiple outputs
 
-    final_ids = []
-    for ids in predicted_ids:
-        collected_ids = np.array(ids)
-        collected_ids = np.array_split(collected_ids, len(ids))
-        collected_ids = [id.tolist() for id in collected_ids]
-        final_ids.append(collected_ids)
-
-    return final_ids
+    return predicted_ids, predicted_scores
 
 
-def clear_results(names, boxes, ids, name):
-    for i in range(len(ids)):
-        keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind] != [None]]
-        boxes[i] = [boxes[i][ind] for ind in keep_index]
-        ids[i] = [ids[i][ind] for ind in keep_index]
+def clear_results(images, scores, img_names, boxes, ids, person=None):
+    keep_img = list()
 
-    new_names = [names[i] for i in range(len(names)) if boxes[i] != []]
+    if person:
+        for i in range(len(ids)):
+            keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind][0] in person]
+            boxes[i] = [boxes[i][ind] for ind in keep_index]
+            ids[i] = [ids[i][ind] for ind in keep_index]
+            scores[i] = [scores[i][ind] for ind in keep_index]
+
+            if keep_index:
+                keep_img.append(i)
+
+    else:
+        for i in range(len(ids)):
+            keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind] != [None]]
+            boxes[i] = [boxes[i][ind] for ind in keep_index]
+            ids[i] = [ids[i][ind] for ind in keep_index]
+            scores[i] = [scores[i][ind] for ind in keep_index]
+
+            if keep_index:
+                keep_img.append(i)
+
+    new_names = [img_names[i] for i in range(len(img_names)) if boxes[i]]
+    new_scores = list(filter(None, scores))
     new_boxes = list(filter(None, boxes))
     new_ids = list(filter(None, ids))
 
-    df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids})
-    if name is not None:
-        find_index = [i for i in range(len(new_ids)) if [name] in new_ids[i]]
-        df_new = df_new.iloc[find_index]
-
+    df_new = pd.DataFrame({'Filename': new_names, 'Bboxes': new_boxes, 'Ids': new_ids, 'Face Scores': new_scores})
     df_new = df_new.reset_index(drop=True)
 
-    return df_new
+    images = [images[i] for i in keep_img]
+
+    return df_new, np.array(images)
 
 
 def face_detection(original_path, anchor_path, finding_name):
@@ -607,10 +608,15 @@ def face_detection(original_path, anchor_path, finding_name):
     + anchor_path : str.
     The path to your anchor image dataset.
 
+    + finding_name: list.
+    A list of names of people we need to find.
+
     Return
     ----------
     + df : Pandas Dataframe.
     A dataframe contained the filenames for input images, as well as predicted bounding boxes.
+
+    + input_img: np.ndarray.
     """
 
     input_name, input_img = read_input_images(original_path, purpose='input')
@@ -633,8 +639,9 @@ def face_detection(original_path, anchor_path, finding_name):
     anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose='anchor')
     input_embed = vector_embedding(infer_model, cropped_img_input, purpose='input')
 
-    final_ids = knn_prediction(anchor_label, anchor_embed, input_embed)
+    final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
 
-    df = clear_results(input_name, input_boxes, final_ids, finding_name)
+    df, input_img = clear_results(images=input_img, img_names=input_name, scores=final_scores,
+                                  boxes=input_boxes, ids=final_ids, person=finding_name)
 
-    return df, input_img #return input images để không phải đọc hình nhiều lần
+    return df, input_img  # return input images để không phải đọc hình nhiều lần
