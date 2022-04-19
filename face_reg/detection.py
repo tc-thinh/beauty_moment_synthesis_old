@@ -525,7 +525,7 @@ def get_neighbors(train, test_row, num_neighbors):
     neighbors = list()
     for i in range(num_neighbors):
         cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
-        if cos_dist <= 0.7:
+        if cos_dist <= 0.8:
             neighbors.append(None)
         else:
             neighbors.append(euclidean_distances[i][1])
