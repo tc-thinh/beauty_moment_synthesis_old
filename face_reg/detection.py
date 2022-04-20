@@ -9,6 +9,7 @@ import os
 from sklearn.neighbors import KNeighborsClassifier
 from numpy import dot
 from numpy.linalg import norm
+from collections import Counter
 
 
 def read_images(path):
@@ -36,7 +37,7 @@ def resize_anchor_images(path):
     return img
 
 
-def read_input_images(path, purpose='anchor', different_sizes=True):
+def read_input_images(path, purpose='anchor'):
     """
     This function reads all the images in the input dataset.
 
@@ -58,8 +59,12 @@ def read_input_images(path, purpose='anchor', different_sizes=True):
 
     if purpose == 'input':
         img_list = list(map(read_images, all_path))
-        if different_sizes:
+        shape_check = all(img_list[i].shape == img_list[0].shape for i in range(len(img_list)))
+        if shape_check:
+            img_list = np.array(img_list)
+        else:
             img_list = resize_input_images(img_list)
+
         return file_name, img_list
 
     elif purpose == 'anchor':
@@ -261,7 +266,7 @@ def convert_bounding_box(box, input_type, change_to):
     """
     assert (type(box) == list), 'The provided bounding box must be a Python list'
     assert (len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
-    assert (input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
+    assert (nput_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
     assert (change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
     assert (input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
 
@@ -505,7 +510,7 @@ def get_neighbors(train, test_row, num_neighbors):
     cosine_scores = list()
     for i in range(num_neighbors):
         cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
-        if cos_dist < 0.75:
+        if cos_dist < 0.8:
             neighbors.append(None)
             cosine_scores.append(None)
         else:
@@ -520,8 +525,8 @@ def classification(mapping, train, test_row, num_neighbors):
     output_values = [row for row in neighbors if row is not None]
     if output_values:
         prediction = max(set(output_values), key=output_values.count)
-        pred_index = [i for i in range(len(output_values)) if output_values[i] == prediction]
-        cosine_score = max([cosine_scores[i] for i in pred_index])
+        prediction_index = [i for i in range(len(output_values)) if output_values[i] == prediction]
+        cosine_score = max([cosine_scores[i] for i in prediction_index])
         prediction = mapping[prediction]
     else:
         prediction = None
@@ -560,6 +565,42 @@ def knn_prediction(anchor_label, anchor_embed, input_embed):
     return predicted_ids, predicted_scores
 
 
+def indices(seq, values):
+    matched_index = []
+    for value in values:
+        lst = [i for i, x in enumerate(seq) if x == value]
+        matched_index.append(lst)
+
+    return matched_index
+
+
+def check_duplicates_ids(ids_list, scores_list, bbox_list):
+    check = [ids[0] for ids in ids_list]
+    if len(check) != len(set(check)):
+        indices_list = indices(check, (key for key, count in Counter(check).items() if count > 1))
+        non_rep = indices(check, (key for key, count in Counter(check).items() if count == 1))
+        non_rep = [item for sublist in non_rep for item in sublist]
+        keep_id = list()
+        keep_id += non_rep
+
+        for img_id in indices_list:
+            scores = [scores_list[i] for i in img_id]
+            scores = np.array(scores)
+            max_id = np.argmax(scores)
+            keep_id.append(img_id[max_id])
+
+        cleared_bbox = [bbox_list[i] for i in keep_id]
+        cleared_scores = [scores_list[i] for i in keep_id]
+        cleared_ids = [ids_list[i] for i in keep_id]
+
+    else:
+        cleared_bbox = bbox_list
+        cleared_scores = scores_list
+        cleared_ids = ids_list
+
+    return cleared_bbox, cleared_scores, cleared_ids
+
+
 def clear_results(images, scores, img_names, boxes, ids, person=None):
     keep_img = list()
 
@@ -587,6 +628,8 @@ def clear_results(images, scores, img_names, boxes, ids, person=None):
     new_scores = list(filter(None, scores))
     new_boxes = list(filter(None, boxes))
     new_ids = list(filter(None, ids))
+
+    new_boxes, new_scores, new_ids = map(list, (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
 
     df_new = pd.DataFrame({'Filename': new_names, 'Bboxes': new_boxes, 'Ids': new_ids, 'Face Scores': new_scores})
     df_new = df_new.reset_index(drop=True)
@@ -618,7 +661,8 @@ def face_detection(original_path, anchor_path, finding_name):
 
     + input_img: np.ndarray.
     """
-
+    finding_name = finding_name.split()
+    print(finding_name)
     input_name, input_img = read_input_images(original_path, purpose='input')
     anchor_label, anchor_img = read_anchor_images(anchor_path)
 
