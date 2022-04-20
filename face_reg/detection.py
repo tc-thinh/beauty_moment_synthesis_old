@@ -525,8 +525,8 @@ def classification(mapping, train, test_row, num_neighbors):
     output_values = [row for row in neighbors if row is not None]
     if output_values:
         prediction = max(set(output_values), key=output_values.count)
-        pred_index = [i for i in range(len(output_values)) if output_values[i] == prediction]
-        cosine_score = max([cosine_scores[i] for i in pred_index])
+        prediction_index = [i for i in range(len(output_values)) if output_values[i] == prediction]
+        cosine_score = max([cosine_scores[i] for i in prediction_index])
         prediction = mapping[prediction]
     else:
         prediction = None
