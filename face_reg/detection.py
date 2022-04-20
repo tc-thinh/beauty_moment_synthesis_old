@@ -661,7 +661,8 @@ def face_detection(original_path, anchor_path, finding_name):
 
     + input_img: np.ndarray.
     """
-
+    finding_name = finding_name.split()
+    print(finding_name)
     input_name, input_img = read_input_images(original_path, purpose='input')
     anchor_label, anchor_img = read_anchor_images(anchor_path)
 
@@ -683,7 +684,7 @@ def face_detection(original_path, anchor_path, finding_name):
     input_embed = vector_embedding(infer_model, cropped_img_input, purpose='input')
 
     final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
-    print(finding_name)
+
     df, input_img = clear_results(images=input_img, img_names=input_name, scores=final_scores,
                                   boxes=input_boxes, ids=final_ids, person=finding_name)
 
