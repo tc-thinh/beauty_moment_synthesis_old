@@ -559,7 +559,7 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
 
 def knn_prediction(anchor_label, anchor_embed, input_embed):
     predicted_ids, predicted_scores = map(list,
-                                          zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed, 8) for embed in
+                                          zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed, 5) for embed in
                                                 input_embed]))  # list comprehension returns multiple outputs
 
     return predicted_ids, predicted_scores
@@ -663,6 +663,7 @@ def face_detection(original_path, anchor_path, finding_name):
     """
     finding_name = finding_name.split()
     print(finding_name)
+    
     input_name, input_img = read_input_images(original_path, purpose='input')
     anchor_label, anchor_img = read_anchor_images(anchor_path)
 
