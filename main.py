@@ -165,7 +165,7 @@ def main():
         start = time.time()
         print("-----Starting face detection module-----")
         
-        df = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
+        df, input_img = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
         
         end = time.time()
         print(f"-----Done face detection. Time since start {end-start}s-----")
