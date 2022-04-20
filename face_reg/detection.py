@@ -510,7 +510,7 @@ def get_neighbors(train, test_row, num_neighbors):
     cosine_scores = list()
     for i in range(num_neighbors):
         cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
-        if cos_dist < 0.75:
+        if cos_dist < 0.8:
             neighbors.append(None)
             cosine_scores.append(None)
         else:
@@ -574,7 +574,7 @@ def indices(seq, values):
     return matched_index
 
 
-def check_duplicates_ids(ids_list, scores_list, bbox_list):  # mapping
+def check_duplicates_ids(ids_list, scores_list, bbox_list):
     check = [ids[0] for ids in ids_list]
     if len(check) != len(set(check)):
         indices_list = indices(check, (key for key, count in Counter(check).items() if count > 1))
@@ -597,6 +597,10 @@ def check_duplicates_ids(ids_list, scores_list, bbox_list):  # mapping
         cleared_bbox = bbox_list
         cleared_scores = scores_list
         cleared_ids = ids_list
+
+    print(cleared_bbox)
+    print(cleared_scores)
+    print(cleared_ids)
 
     return cleared_bbox, cleared_scores, cleared_ids
 
