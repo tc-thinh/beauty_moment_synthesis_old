@@ -598,10 +598,6 @@ def check_duplicates_ids(ids_list, scores_list, bbox_list):
         cleared_scores = scores_list
         cleared_ids = ids_list
 
-    print(cleared_bbox)
-    print(cleared_scores)
-    print(cleared_ids)
-
     return cleared_bbox, cleared_scores, cleared_ids
 
 
@@ -687,7 +683,7 @@ def face_detection(original_path, anchor_path, finding_name):
     input_embed = vector_embedding(infer_model, cropped_img_input, purpose='input')
 
     final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
-    print(finding_name)
+
     df, input_img = clear_results(images=input_img, img_names=input_name, scores=final_scores,
                                   boxes=input_boxes, ids=final_ids, person=finding_name)
 
