@@ -15,13 +15,14 @@ def load_smile_model(model_path):
                     metrics = ['accuracy'])
     return model
 
-  
-def get_smile_score(path, df, model):
+
+def get_smile_score(df, img_list, model):
     smile_score = []
     filename = []
+    final_img = []
     for i in range(len(df)):
         if df["bboxes"][i][0] is not None:
-            input_data = get_target_bbox(os.path.join(path, df["filename"][i]), df["bboxes"][i], p=0.15)
+            input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
             score = []
             for j in input_data:
                 img = cv2.cvtColor(j, cv2.COLOR_BGR2RGB)
@@ -30,11 +31,17 @@ def get_smile_score(path, df, model):
                 img = np.reshape(img, [1, 139, 139, 3])
 
                 preditions = model.predict(img)
-                
-                score.append(preditions[0][0]*100)
-            filename.append(os.path.join(path, df["filename"][i]))
-            smile_score.append(sum(score)/len(score))
-    new_df = pd.DataFrame({'filename': filename, 'score': smile_score})
-    sorted_df = new_df.sort_values(by="score", ascending=False)
 
-    return sorted_df
+                score.append(preditions[0][0] * 100)
+
+            filename.append(df["filename"][i])
+            final_img.append(img_list[i])
+            smile_score.append(sum(score) / len(score))
+
+    new_df = pd.DataFrame({'filename': filename, 'score': smile_score})
+    new_df.sort_values(by="score", ascending=False, inplace=True)
+    old_index = list(new_df.index)
+    final_img = [final_img[i] for i in old_index]
+
+    new_df.reset_index(drop=True)
+    turn new_df, np.array(final_img)

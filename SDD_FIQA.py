@@ -5,6 +5,8 @@ import torchvision.transforms as T
 from PIL import Image
 from misc.extract_bbox import *
 from model import model
+import numpy as np
+import cv2
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model_path = 'model/SDD_FIQA_checkpoints_r50.pth'
@@ -38,13 +40,14 @@ def network(model_path, device):
     return net
 
 
-def FIQA(df, path):
+def FIQA(df, img_list): # input_img
     net = network(model_path, device)
     fiqa_score = []
     bbox = []
+    qualified_img = []
     filename = []
     for i in range(len(df)):
-        input_data = get_target_bbox(os.path.join(path, df["filename"][i]), df["bboxes"][i], p=0.15)
+        input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
         score = []
         for j in input_data:
             if j.shape[0] > 0 and j.shape[1] > 0:
@@ -52,13 +55,14 @@ def FIQA(df, path):
                 pred_score = net(img).data.cpu().numpy().squeeze()
                 score.append(pred_score)
                 print(pred_score)
-        try:
+ #       try:
             if max(score) > 40:
-                filename.append(df["filename"][i])
+                qualified_img.append(img_list[i])
+                filename.append(df['filename'][i])
                 bbox.append(df["bboxes"][i])
                 fiqa_score.append(score)
-        except:
-            pass
+    #    except:
+    #        pass
 
     new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox, "fiqa_score": fiqa_score})
-    return new_df
+    return new_df, np.array(qualified_img)

@@ -170,14 +170,14 @@ def main():
         print(f"-----Done face detection. Time since start {end-start}s-----")
         print("-----Starting face image quality assessment module-----")
         
-        df = FIQA(df=df, path=args.original_dataset_path)
+        df, qualified_img = FIQA(df, input_img)
         
         end = time.time()
         print(f"-----Done face image quality assessment. Time since start {end-start}s-----")
         print("-----Starting smile score assessment module-----")
         
         smile_model = load_smile_model(r"model/smile_score.h5")
-        df = get_smile_score(path=args.original_dataset_path, df=df, model=smile_model)
+        df, input_img = get_smile_score(df, input_img, smile_model)
         
         end = time.time()
         print(f"-----Done smile score assessment. Time since start {end-start}s-----")
@@ -186,7 +186,7 @@ def main():
         # img_list = process_images_for_vid(list(df["filename"])[0:args.number_of_images], effect_speed=args.effect_speed, duration=args.duration,
                                           # fps=args.fps, fraction=args.fraction)
                                           
-        print(list(df["filename"])[0:args.number_of_images])
+       # print(list(df["filename"])[0:args.number_of_images])
         
         make_video(img_list=list(df["filename"])[0:args.number_of_images], output_path=args.output_path, 
                    effect_speed=args.effect_speed, duration=args.duration, fps=args.fps, fraction=args.fraction)

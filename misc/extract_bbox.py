@@ -84,8 +84,8 @@ def convert_bounding_box(box, input_type, change_to):
             return [x_center, y_center, width, height]
         
         
-def get_target_bbox(img_path, bboxes, p=0.1):
-    img = cv2.imread(img_path)
+def get_target_bbox(img, bboxes, p=0.1):
+   # img = cv2.imread(img_path)
     data = []
     for bbox in bboxes:
         bbox = convert_bounding_box(box=bbox, input_type="opencv", change_to="coco")

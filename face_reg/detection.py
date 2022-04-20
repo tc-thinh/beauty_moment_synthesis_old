@@ -631,7 +631,7 @@ def clear_results(images, scores, img_names, boxes, ids, person=None):
 
     new_boxes, new_scores, new_ids = map(list, (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
 
-    df_new = pd.DataFrame({'Filename': new_names, 'Bboxes': new_boxes, 'Ids': new_ids, 'Face Scores': new_scores})
+    df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids, 'face scores': new_scores})
     df_new = df_new.reset_index(drop=True)
 
     images = [images[i] for i in keep_img]
@@ -663,6 +663,7 @@ def face_detection(original_path, anchor_path, finding_name):
     """
     finding_name = finding_name.split()
     print(finding_name)
+
     input_name, input_img = read_input_images(original_path, purpose='input')
     anchor_label, anchor_img = read_anchor_images(anchor_path)
 
