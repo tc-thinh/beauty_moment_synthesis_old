@@ -54,15 +54,13 @@ def FIQA(df, img_list): # input_img
                 img = process_fiqa_image(j).to(device)
                 pred_score = net(img).data.cpu().numpy().squeeze()
                 score.append(pred_score)
-                print(pred_score)
- #       try:
+
             if max(score) > 40:
                 qualified_img.append(img_list[i])
                 filename.append(df['filename'][i])
                 bbox.append(df["bboxes"][i])
                 fiqa_score.append(score)
-    #    except:
-    #        pass
+
 
     new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox, "fiqa_score": fiqa_score})
     return new_df, np.array(qualified_img)

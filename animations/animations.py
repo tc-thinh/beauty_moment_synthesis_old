@@ -5,22 +5,16 @@ import numpy as np
 
 
 def process_images_for_vid(img_list, effect_speed, duration, fps, fraction):
-    images = []
-
-    for i in range(len(img_list)):
-        image = cv2.imread(img_list[i])
-        images.append(image)
-    
     h = []
     w = []
 
-    for image in images:
+    for image in img_list:
         height, width, _ = image.shape
         h.append(height)
         w.append(width)
 
-    h = int(min(h)/fraction)
-    w = int(min(w)/fraction)
+    h = int(min(h) / fraction)
+    w = int(min(w) / fraction)
 
     if w % effect_speed == 0:
         k = w // effect_speed
@@ -29,12 +23,13 @@ def process_images_for_vid(img_list, effect_speed, duration, fps, fraction):
 
     assert duration - k / fps > 0, f"change your parameters, current h = {h}, w = {w}, k = {k}, duration - k / fps = {duration - k / fps}"
 
-    img_list = []
-    for image in images:
+    images = list()
+    for image in img_list:
         img = cv2.resize(image, (w, h))
-        img_list.append(img)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        images.append(img)
 
-    return img_list, w, h
+    return images, w, h
 
 
 def cover_animation(img_list, w, h, from_right=random.randint(0, 1), fps=30, effect_speed=2, duration=1):  # change speed to time
