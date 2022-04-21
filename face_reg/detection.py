@@ -559,7 +559,7 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
 
 def knn_prediction(anchor_label, anchor_embed, input_embed):
     predicted_ids, predicted_scores = map(list,
-                                          zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed, 8) for embed in
+                                          zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed, 5) for embed in
                                                 input_embed]))  # list comprehension returns multiple outputs
 
     return predicted_ids, predicted_scores
