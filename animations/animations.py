@@ -37,7 +37,7 @@ def process_images_for_vid(img_list, effect_speed, duration, fps, fraction):
     return img_list, w, h
 
 
-def cover_animation(img_list, w, h, from_right=random.randint(0, 1), fps=30, effect_speed=2, duration=1):  # change speed to time
+def cover_animation(img_list, w, h, from_right=random.randint(0, 1), fps=30, effect_speed=2, duration=1):
 
     frames = []
 
@@ -161,31 +161,6 @@ def split_animation(img_list, w, h, fps=30, effect_speed=2, duration=1):
     return frames
 
 
-# comb_animation(folder_name = "test", filename = "results/output_video4.avi", fps = 75, effect_speed = 2, duration = 3)
-
-
-def fade_animation(img_list, w, h, fps=30, effect_speed=2, duration=1):
-    frames = []
-    prev_image = Image(img_list[0], w, h)
-    prev_image.reset()
-
-    for j in range(1, len(img_list)):
-        img = img_list[j]
-        img = Image(img, w, h)
-        img.reset()
-        # number of frames - time = number of frames/fps
-        for i in tqdm(range((duration * fps) // 3)):
-            alpha = i / (duration * fps)
-            beta = 1.0 - alpha
-            dst = cv2.addWeighted(img.get_frame(), alpha, prev_image.get_frame(), beta, 0.0)
-            frames.append(dst)
-        prev_image = img
-        for _ in tqdm(range(2 * (duration * fps) // 3)):  # number of frames
-            frames.append(img.get_frame())
-
-    return frames
-
-
 def extract_final_H(opencv_bbox, W, H):
     x, y, w, h = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="coco")
     
@@ -225,6 +200,25 @@ def zoom_in_animation(img, W, H, opencv_bbox, fps = 30, duration = 1):
         frames.append(result)
         j += 1
                 
+    return frames
+    
+
+def fade_animation(img_list, w, h, fps=30, effect_speed=2, duration=1):
+    
+    frames = []
+    n_frames = int(2*fps*duration/3)
+    
+    for i in range(len(img_list)-1):
+    
+        for IN in range(0, n_frames):
+        
+            fadein = IN/float(n_frames)
+            dst = cv2.addWeighted(img_list[i], 1-fadein, img_list[i+1], fadein, 0)
+            frames.append(dst)
+            
+        for _ in range(fps*duration-n_frames):
+            frames.append(img_list[i+1])
+            
     return frames
 
 

@@ -14,7 +14,7 @@ import numpy as np
 
 def random_number():
     numb = random.randint(0, 1000)
-    return numb % 5	
+    return numb % 6	
 
 
 def make_video(img_list, output_path, effect_speed=1, duration=3, fps=30, fraction=1):
