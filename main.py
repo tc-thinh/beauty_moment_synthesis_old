@@ -163,36 +163,36 @@ def main():
     else:
         start = time.time()
         print("-----Starting face detection module-----")
-        
+
         df, input_img = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
-        
+
         end = time.time()
-        print(f"-----Done face detection. Time since start {end-start}s-----")
+        print(f"-----Done face detection. Time since start {end - start}s-----")
         print("-----Starting face image quality assessment module-----")
-        
-        df = FIQA(df=df, path=args.original_dataset_path)
-        
+
+        df, input_img = FIQA(df, input_img)
+
         end = time.time()
-        print(f"-----Done face image quality assessment. Time since start {end-start}s-----")
+        print(f"-----Done face image quality assessment. Time since start {end - start}s-----")
         print("-----Starting smile score assessment module-----")
-        
+
         smile_model = load_smile_model(r"model/smile_score.h5")
-        df = get_smile_score(path=args.original_dataset_path, df=df, model=smile_model)
-        
+        df, input_img = get_smile_score(df, input_img, smile_model)
         end = time.time()
-        print(f"-----Done smile score assessment. Time since start {end-start}s-----")
+        print(f"-----Done smile score assessment. Time since start {end - start}s-----")
         print("-----Starting create video-----")
-        
+
         # img_list = process_images_for_vid(list(df["filename"])[0:args.number_of_images], effect_speed=args.effect_speed, duration=args.duration,
-                                          # fps=args.fps, fraction=args.fraction)
-                                          
-        print(list(df["filename"])[0:args.number_of_images])
-        
-        make_video(img_list=list(df["filename"])[0:args.number_of_images], output_path=args.output_path, 
+        # fps=args.fps, fraction=args.fraction)
+
+        #print(list(df["filename"])[0:args.number_of_images])
+
+        make_video(img_list=input_img[:args.number_of_images],
+                   output_path=args.output_path,
                    effect_speed=args.effect_speed, duration=args.duration, fps=args.fps, fraction=args.fraction)
-                   
+
         end = time.time()
-        print(f"-----Done create video. Time since start {end-start}s-----")
+        print(f"-----Done create video. Time since start {end - start}s-----")
         print("-----DONE-----")
 
 

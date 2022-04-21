@@ -662,8 +662,8 @@ def face_detection(original_path, anchor_path, finding_name):
     + input_img: np.ndarray.
     """
     finding_name = finding_name.split()
-    print(finding_name)
-    
+    print('People we need to identify:', finding_name)
+
     input_name, input_img = read_input_images(original_path, purpose='input')
     anchor_label, anchor_img = read_anchor_images(anchor_path)
 
