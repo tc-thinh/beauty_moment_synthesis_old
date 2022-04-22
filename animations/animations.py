@@ -4,7 +4,7 @@ from tqdm import tqdm
 import numpy as np
 
 
-def process_images_for_vid(img_list, effect_speed, duration, fps, fraction):
+def process_images_for_vid(img_list, effect_speed, duration, fps, fraction=1):
     h = []
     w = []
 
@@ -19,7 +19,7 @@ def process_images_for_vid(img_list, effect_speed, duration, fps, fraction):
     if w % effect_speed == 0:
         k = w // effect_speed
     else:
-        k = w // effect_speed + 1
+        k = w // (effect_speed + 1)
 
     assert duration - k / fps > 0, f"change your parameters, current h = {h}, w = {w}, k = {k}, duration - k / fps = {duration - k / fps}"
 
