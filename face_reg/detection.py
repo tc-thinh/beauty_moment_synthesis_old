@@ -663,6 +663,7 @@ def face_detection(original_path, anchor_path, finding_name):
     """
     finding_name = finding_name.split()
     print('People we need to identify:', finding_name)
+    log = 'People we need to identify:' + str(finding_name)
 
     input_name, input_img = read_input_images(original_path, purpose='input')
     anchor_label, anchor_img = read_anchor_images(anchor_path)
@@ -689,4 +690,4 @@ def face_detection(original_path, anchor_path, finding_name):
     df, input_img = clear_results(images=input_img, img_names=input_name, scores=final_scores,
                                   boxes=input_boxes, ids=final_ids, person=finding_name)
 
-    return df, input_img  # return input images để không phải đọc hình nhiều lần
+    return df, input_img, log  # return input images để không phải đọc hình nhiều lần

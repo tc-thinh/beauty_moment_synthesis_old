@@ -92,7 +92,10 @@ def main():
                     new_message="-----Starting face detection module-----", 
                     type="string + enter")
 
-    df, input_img = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
+    df, input_img, new_log = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
+    log = write_log(old_log=log, 
+                    new_message=new_log, 
+                    type="string + enter")
     
     log = write_log(old_log=log, 
                     new_message=df, 
