@@ -61,6 +61,8 @@ def FIQA(df, img_list):
 
     new_df = df.iloc[keep_index]
     new_df['fiqa scores'] = fiqa_scores
+    new_df = new_df.reset_index(drop=True)
+
     qualified_img = [img_list[index] for index in keep_index]
     qualified_img = np.array(qualified_img)
 
