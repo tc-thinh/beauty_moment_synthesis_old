@@ -57,7 +57,7 @@ def FIQA(df, img_list):
 
             if max(score) > 40:
                 keep_index.append(i)
-                fiqa_scores.append([score[0].item()])
+                fiqa_scores.append(score[0].item())
 
     new_df = df.iloc[keep_index]
     new_df['fiqa scores'] = fiqa_scores

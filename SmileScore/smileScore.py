@@ -30,7 +30,7 @@ def get_smile_score(df, img_list, model):
         score.append(predictions[0][0] * 100)
 
       final_img.append(img_list[i])
-      smile_score.append([sum(score) / len(score)])
+      smile_score.append(sum(score) / len(score))
 
     new_df = df.copy()
     new_df['smile scores'] = smile_score
