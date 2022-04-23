@@ -18,26 +18,23 @@ def load_smile_model(model_path):
 
 def get_smile_score(df, img_list, model):
     smile_score = []
-    filename = []
     final_img = []
+
     for i in range(len(df)):
-        if df["bboxes"][i][0] is not None:
-            input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
-            score = []
-            for j in input_data:
-                img = cv2.resize(j, (139, 139))
-                img = np.reshape(img, [1, 139, 139, 3])
+      input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
+      score = []
+      for j in input_data:
+        img = cv2.resize(j, (139, 139))
+        img = np.reshape(img, [1, 139, 139, 3])
+        predictions = model.predict(img)
+        score.append(predictions[0][0] * 100)
 
-                preditions = model.predict(img)
+      final_img.append(img_list[i])
+      smile_score.append([sum(score) / len(score)])
 
-                score.append(preditions[0][0] * 100)
-
-            filename.append(df["filename"][i])
-            final_img.append(img_list[i])
-            smile_score.append(sum(score) / len(score))
-
-    new_df = pd.DataFrame({'filename': filename, 'score': smile_score})
-    new_df.sort_values(by="score", ascending=False, inplace=True)
+    new_df = df.copy()
+    new_df['smile scores'] = smile_score
+    new_df.sort_values(by="smile scores", ascending=False, inplace=True)
     old_index = list(new_df.index)
     final_img = [final_img[i] for i in old_index]
 

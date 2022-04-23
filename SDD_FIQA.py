@@ -40,9 +40,10 @@ def network(model_path, device):
     return net
 
 
-def FIQA(df, img_list): # input_img
+def FIQA(df, img_list):
     net = network(model_path, device)
-    fiqa_score = []
+    fiqa_scores = []
+    face_scores = []
     bbox = []
     qualified_img = []
     filename = []
@@ -59,8 +60,9 @@ def FIQA(df, img_list): # input_img
                 qualified_img.append(img_list[i])
                 filename.append(df['filename'][i])
                 bbox.append(df["bboxes"][i])
-                fiqa_score.append(score)
+                fiqa_scores.append([score[0].item()])
+                face_scores.append(df['face scores'][i])
 
-
-    new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox, "fiqa_score": fiqa_score})
+    new_df = pd.DataFrame(
+        {'filename': filename, 'bboxes': bbox, "face scores": face_scores, "fiqa scores": fiqa_scores})
     return new_df, np.array(qualified_img)

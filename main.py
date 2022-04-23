@@ -146,11 +146,6 @@ def main():
                     new_message="-----Starting create video-----", 
                     type="string + enter")
 
-    # img_list = process_images_for_vid(list(df["filename"])[0:args.number_of_images], effect_speed=args.effect_speed, duration=args.duration,
-    # fps=args.fps, fraction=args.fraction)
-
-    #print(list(df["filename"])[0:args.number_of_images])
-
     make_video(img_list=input_img[:args.number_of_images],
                output_path=args.output_path,
                effect_speed=args.effect_speed, 
