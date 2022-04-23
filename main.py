@@ -77,7 +77,13 @@ def parse_args():
                         type=bool,
                         required=False,
                         default=False)
-                        
+
+    parser.add_argument('--visualize_boxes',
+                        help='Visualizing bounding boxes in the video',
+                        type=bool,
+                        required=False,
+                        default=False)
+
     args = parser.parse_args()
     return args
 
@@ -130,7 +136,10 @@ def main():
 
     smile_model = load_smile_model(r"model/smile_score.h5")
     df, input_img = get_smile_score(df, input_img, smile_model)
-    
+
+    if args.visualize_boxes:
+      input_img = visualizing_bounding_boxes(df, input_img)
+
     log = write_log(old_log=log, 
                     new_message=df, 
                     type="dataframe + enter")
