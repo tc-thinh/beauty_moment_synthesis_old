@@ -43,24 +43,24 @@ def network(model_path, device):
 def FIQA(df, img_list): # input_img
     net = network(model_path, device)
     fiqa_score = []
-    bbox = []
+    bbox_list = []
     qualified_img = []
     filename = []
-    for i in range(len(df)):
-        input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
+    for idx in range(len(df)):
+        bboxes = get_target_bbox(img_list[idx], df["bboxes"][idx], p=0.15)
         score = []
-        for j in input_data:
-            if j.shape[0] > 0 and j.shape[1] > 0:
-                img = process_fiqa_image(j).to(device)
+        for bbox in bboxes:
+            if bbox.shape[0] > 0 and bbox.shape[1] > 0:
+                img = process_fiqa_image(bbox).to(device)
                 pred_score = net(img).data.cpu().numpy().squeeze()
                 score.append(pred_score)
 
             if max(score) > 40:
-                qualified_img.append(img_list[i])
-                filename.append(df['filename'][i])
-                bbox.append(df["bboxes"][i])
+                qualified_img.append(img_list[idx])
+                filename.append(df['filename'][idx])
+                bbox_list.append(df["bboxes"][idx])
                 fiqa_score.append(score)
 
 
-    new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox, "fiqa_score": fiqa_score})
+    new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox_list, "fiqa_score": fiqa_score})
     return new_df, np.array(qualified_img)
