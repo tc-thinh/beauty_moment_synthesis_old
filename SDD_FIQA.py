@@ -49,9 +49,9 @@ def FIQA(df, img_list):
     for i in range(len(df)):
         input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
         score = []
-        for j in input_data:
-            if j.shape[0] > 0 and j.shape[1] > 0:
-                img = process_fiqa_image(j).to(device)
+        for bbox in bboxes:
+            if bbox.shape[0] > 0 and bbox.shape[1] > 0:
+                img = process_fiqa_image(bbox).to(device)
                 pred_score = net(img).data.cpu().numpy().squeeze()
                 score.append(pred_score)
 
@@ -65,5 +65,6 @@ def FIQA(df, img_list):
 
     qualified_img = [img_list[index] for index in keep_index]
     qualified_img = np.array(qualified_img)
+
 
     return new_df, qualified_img
