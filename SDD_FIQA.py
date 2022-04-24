@@ -55,7 +55,7 @@ def FIQA(df, img_list):
                 pred_score = net(img).data.cpu().numpy().squeeze()
                 score.append(pred_score)
 
-            if max(score) > config.FIQA.THRESHOLD:
+            if max(score) > CFG_FIQA.THRESHOLD:
                 keep_index.append(i)
                 fiqa_scores.append(score[0].item())
 
