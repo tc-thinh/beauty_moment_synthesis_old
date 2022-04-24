@@ -10,6 +10,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from numpy import dot
 from numpy.linalg import norm
 from collections import Counter
+from config import *
 
 
 def read_images(path):
@@ -32,7 +33,7 @@ def resize_input_images(img_list, fraction=1):
 def resize_anchor_images(path):
     img = cv2.imread(path, 1)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, (400, 600))
+    img = cv2.resize(img, config.ANCHOR_SIZE)
 
     return img
 
@@ -90,7 +91,7 @@ def read_anchor_images(path):
     Return people's ids for those images (needed for Face Recognition).
 
     """
-    folder_name = [name for name in os.listdir(path) if name[-3:] != 'txt']
+    folder_name = [name for name in os.listdir(path)]
     folder_name.sort()
     folder_path = [os.path.join(path, name) for name in folder_name]
     img_list = list(map(read_input_images, folder_path))
@@ -265,10 +266,14 @@ def convert_bounding_box(box, input_type, change_to):
 
     """
     assert (type(box) == list), 'The provided bounding box must be a Python list'
-    assert (len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
-    assert (nput_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
-    assert (change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
-    assert (input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
+    assert (
+                len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
+    assert (
+                nput_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
+    assert (
+                change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
+    assert (
+                input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
 
     if input_type == 'opencv':
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]
@@ -452,7 +457,7 @@ def vector_embedding(infer_model, img_list, purpose='input'):
         img_list = list(map(transform, img_list))
         img_list = torch.stack(img_list, dim=0)
 
-        batch_size = 32
+        batch_size = CFG_REG.BATCH_SIZE
         steps = math.ceil(len(img_list) / batch_size)
         img_list = torch.split(img_list, steps)
 
@@ -510,7 +515,7 @@ def get_neighbors(train, test_row, num_neighbors):
     cosine_scores = list()
     for i in range(num_neighbors):
         cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
-        if cos_dist < 0.8:
+        if cos_dist < CFG_REG.THRESHOLD:
             neighbors.append(None)
             cosine_scores.append(None)
         else:
@@ -558,9 +563,8 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
 
 
 def knn_prediction(anchor_label, anchor_embed, input_embed):
-    predicted_ids, predicted_scores = map(list,
-                                          zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed, 5) for embed in
-                                                input_embed]))  # list comprehension returns multiple outputs
+    predicted_ids, predicted_scores = map(list, zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed,
+                                                      CFG_REG.NUM_NEIGHBORS) for embed in input_embed]))  # list comprehension returns multiple outputs
 
     return predicted_ids, predicted_scores
 
@@ -670,8 +674,8 @@ def face_detection(original_path, anchor_path, finding_name):
 
     mtcnn, infer_model = create_facenet_models()
 
-    input_boxes, _, _ = get_bounding_box(mtcnn, input_img, 64)
-    anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, 64)
+    input_boxes, _, _ = get_bounding_box(mtcnn, input_img, CFG_REG.BATCH_SIZE)
+    anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, CFG_REG.BATCH_SIZE)
 
     input_boxes = clipping(input_img, input_boxes)
     anchor_boxes = clipping(anchor_img, anchor_boxes)
@@ -690,4 +694,4 @@ def face_detection(original_path, anchor_path, finding_name):
     df, input_img = clear_results(images=input_img, img_names=input_name, scores=final_scores,
                                   boxes=input_boxes, ids=final_ids, person=finding_name)
 
-    return df, input_img, log  # return input images để không phải đọc hình nhiều lần
+    return df, input_img, log

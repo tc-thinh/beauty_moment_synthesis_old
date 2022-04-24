@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from misc.extract_bbox import *
-
+from config import *
 
 def load_smile_model(model_path):
     model = load_model(model_path)
