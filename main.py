@@ -9,6 +9,7 @@ from SmileScore.smileScore import *
 from animations.make_video import *
 import datetime
 from misc.log import *
+from config import *
 from misc.visualize import *
 
 import warnings
@@ -135,7 +136,7 @@ def main():
                     new_message="-----Starting smile score assessment module-----", 
                     type="string + enter")
 
-    smile_model = load_smile_model(r"model/smile_score.h5")
+    smile_model = load_smile_model(CFG_SMILE.MODEL_PATH)
     df, input_img = get_smile_score(df, input_img, smile_model)
 
     if args.visualize_boxes:

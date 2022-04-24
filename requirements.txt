@@ -1,1 +1,3 @@
 facenet-pytorch
+easydict
+tabulate

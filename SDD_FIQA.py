@@ -7,12 +7,13 @@ from misc.extract_bbox import *
 from model import model
 import numpy as np
 import cv2
+from config import *
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path = 'model/SDD_FIQA_checkpoints_r50.pth'
+model_path = CFG_FIQA.MODEL_PATH
 
 
-def process_fiqa_image(img):  # read image & data pre-process
+def process_fiqa_image(img):
 
     data = torch.randn(1, 3, 112, 112)
 
@@ -54,7 +55,7 @@ def FIQA(df, img_list):
                 pred_score = net(img).data.cpu().numpy().squeeze()
                 score.append(pred_score)
 
-            if max(score) > 40:
+            if max(score) > CFG_FIQA.THRESHOLD:
                 keep_index.append(i)
                 fiqa_scores.append(score[0].item())
 
