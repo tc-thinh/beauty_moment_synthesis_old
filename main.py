@@ -9,6 +9,7 @@ from SmileScore.smileScore import *
 from animations.make_video import *
 import datetime
 from misc.log import *
+from misc.visualize import *
 
 import warnings
 warnings.filterwarnings('ignore')
