@@ -17,7 +17,7 @@ def random_number():
     return numb % 6	
 
 
-def initialize_video(image, W, H):
+def initialize_video(image, W, H, effect_speed, fps, duration):
     animation = {
         0: cover,
         1: uncover,
@@ -27,12 +27,12 @@ def initialize_video(image, W, H):
         5: fade,
     }
     
-    black_screen = np.zeros([W, H, 3], dtype=np.uint8)
+    black_screen = np.zeros([H, W, 3], dtype=np.uint8)
     black_screen.fill(0)  # black screen
     
     frames = []
     frames.append(animation[random_number()](img_list=[black_screen, image], 
-                                             w=w, h=h,
+                                             w=W, h=H,
                                              effect_speed=effect_speed, 
                                              fps=fps,
                                              duration=duration)
@@ -51,7 +51,7 @@ def make_video(img_list, output_path, effect_speed=1, duration=3, fps=30, fracti
     }
 
     img_list, w, h = process(img_list, effect_speed, duration, fps, fraction=fraction)
-    frames = initialize_video(image=img_list[0], W=w, H=h)    
+    frames = initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)    
     
     for i in tqdm(range(len(img_list) - 1)):
         frames.append(animation[random_number()](img_list=img_list[i:i + 2], w=w, h=h,
