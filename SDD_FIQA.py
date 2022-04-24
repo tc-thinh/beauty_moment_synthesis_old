@@ -12,7 +12,8 @@ from config import *
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model_path = CFG_FIQA.MODEL_PATH
 
-def process_fiqa_image(img):  # read image & data pre-process
+
+def process_fiqa_image(img):
 
     data = torch.randn(1, 3, 112, 112)
 
