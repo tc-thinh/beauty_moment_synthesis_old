@@ -21,7 +21,7 @@ def get_smile_score(df, img_list, model):
     final_img = []
 
     for i in range(len(df)):
-      input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
+      input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=CFG_FIQA.EXTEND_RATE)
       score = []
       for j in input_data:
         img = cv2.resize(j, (139, 139))

@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 from config import *
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = config.DEVICE
 model_path = CFG_FIQA.MODEL_PATH
 
 
@@ -47,7 +47,7 @@ def FIQA(df, img_list):
     keep_index = []
 
     for i in range(len(df)):
-        input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=0.15)
+        input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=CFG_FIQA.EXTEND_RATE)
         score = []
         for j in input_data:
             if j.shape[0] > 0 and j.shape[1] > 0:
