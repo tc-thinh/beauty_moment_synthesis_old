@@ -19,13 +19,13 @@ def read_images(path):
     return img
 
 
-def resize_input_images(img_list, fraction=1):
+def resize_input_images(img_list, fraction = 1):
     all_width = [img_list[i].shape[-3] for i in range(len(img_list))]
     mean_width = int(sum(all_width) / len(all_width) * fraction)
     all_height = [img_list[i].shape[-2] for i in range(len(img_list))]
     mean_height = int(sum(all_height) / len(all_height) * fraction)
 
-    img_list = np.stack([cv2.resize(img_list[i], (mean_height, mean_width)) for i in range(len(img_list))], axis=0)
+    img_list = np.stack([cv2.resize(img_list[i], (mean_height, mean_width)) for i in range(len(img_list))], axis = 0)
 
     return img_list
 
@@ -38,7 +38,7 @@ def resize_anchor_images(path):
     return img
 
 
-def read_input_images(path, purpose='anchor'):
+def read_input_images(path, purpose = 'anchor'):
     """
     This function reads all the images in the input dataset.
 
@@ -269,7 +269,7 @@ def convert_bounding_box(box, input_type, change_to):
     assert (len(box) == 4), 'Must be a bounding box that has 4 elements (OpenCV format)'
     assert (input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv')
     assert (change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv')
-    assert (input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
+    assert (input_type != change_to), "The format between your input bounding boxes nad output boxes must be different."
 
     if input_type == 'opencv':
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]
@@ -335,9 +335,6 @@ def transform(img):
 
 
 def filter_images(name, img_list, boxes):
-    #   discard_index = [i for i, x in enumerate(boxes) if x[0] == [None]]
-    #   if discard_index != [None]:
-    #       discard_name = [name[i] for i in discard_index]
 
     keep_index = [i for i, x in enumerate(boxes) if x[0] != [None]]
 
@@ -409,19 +406,19 @@ def clipping(img_list, boxes):
     return box_clipping
 
 
-def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
+def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, purpose = 'input'):
 
-    def crop_with_percent(img, box, percent=CFG_REG.CROP.EXTEND_RATE):
+    def crop_with_percent(img, box, rate=0):
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
-        x_left -= percent * (x_right - x_left)
-        x_right += percent * (x_right - x_left)
-        y_top -= percent * (y_bot - y_top)
-        y_bot += percent * (y_bot - y_top)
+        x_left -= rate * (x_right - x_left)
+        x_right += rate * (x_right - x_left)
+        y_top -= rate * (y_bot - y_top)
+        y_bot += rate * (y_bot - y_top)
         target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
 
         target_img = cv2.resize(target_img, CFG_REG.CROP.FACE_SIZE,
-                                interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
+                                interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
         return np.array(target_img).astype('int16')
 
@@ -429,8 +426,8 @@ def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
         faces = []
         for i in range(len(img_list)):
             if len(box_clipping[i]) > 1:
-                img_list_map = np.expand_dims(img_list[i], axis=0)
-                img_list_map = np.repeat(img_list_map, repeats=len(box_clipping[i]), axis=0)
+                img_list_map = np.expand_dims(img_list[i], axis = 0)
+                img_list_map = np.repeat(img_list_map, repeats = len(box_clipping[i]), axis = 0)
                 faces.append(list(map(crop_with_percent, img_list_map, box_clipping[i])))
 
             elif len(box_clipping[i]) == 1:
@@ -468,7 +465,7 @@ def vector_embedding(infer_model, img_list, purpose='input'):
 
         for img in img_list:
             mini_list = list(map(transform, img))
-            mini_list = torch.stack(mini_list, dim=0)
+            mini_list = torch.stack(mini_list, dim = 0)
 
             embedding = extract_vector(mini_list)
 
@@ -492,7 +489,7 @@ def names_to_integers(list_name):
 
 
 def euclidean_distance(row1, row2):
-    euclidean_dist = np.linalg.norm(row1 - row2[:-1])
+    euclidean_dist = norm(row1 - row2[:-1])
 
     return (euclidean_dist, int(row2[-1]))
 
