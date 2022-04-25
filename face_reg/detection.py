@@ -112,7 +112,7 @@ def read_anchor_images(path):
 
 def create_facenet_models():
     """
-  This function returns an MTCNN model base - which was used to detect human
+  This function returns an MTCNN + InceptionResnet V1 model bases - which was used to detect and encode human
   faces in images.
   Original GitHub Repository: https://github.com/timesler/facenet-pytorch
 
@@ -131,7 +131,7 @@ def create_facenet_models():
   >> model_A.min_face_size = 10
   """
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = config.DEVICE
     print('Used device: {}'.format(device))
     infer_model = InceptionResnetV1(pretrained='vggface2', device=device).eval()
 
@@ -266,14 +266,10 @@ def convert_bounding_box(box, input_type, change_to):
 
     """
     assert (type(box) == list), 'The provided bounding box must be a Python list'
-    assert (
-                len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
-    assert (
-                nput_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
-    assert (
-                change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
-    assert (
-                input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
+    assert (len(box) == 4), 'Must be a bounding box that has 4 elements (OpenCV format)'
+    assert (input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv')
+    assert (change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv')
+    assert (input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
 
     if input_type == 'opencv':
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]
@@ -414,7 +410,8 @@ def clipping(img_list, boxes):
 
 
 def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
-    def crop_with_percent(img, box, percent=0):
+
+    def crop_with_percent(img, box, percent=CFG_REG.CROP.EXTEND_RATE):
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
         x_left -= percent * (x_right - x_left)
@@ -423,7 +420,8 @@ def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
         y_bot += percent * (y_bot - y_top)
         target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
 
-        target_img = cv2.resize(target_img, (240, 300), interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
+        target_img = cv2.resize(target_img, CFG_REG.CROP.FACE_SIZE,
+                                interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
         return np.array(target_img).astype('int16')
 
@@ -445,7 +443,7 @@ def cropping_face(img_list, box_clipping, percent=0, purpose='input'):
 
 
 def vector_embedding(infer_model, img_list, purpose='input'):
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = config.DEVICE
 
     def extract_vector(batch):
         batch = batch.to(device)
@@ -515,7 +513,7 @@ def get_neighbors(train, test_row, num_neighbors):
     cosine_scores = list()
     for i in range(num_neighbors):
         cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
-        if cos_dist < CFG_REG.THRESHOLD:
+        if cos_dist < CFG_REG.KNN.THRESHOLD:
             neighbors.append(None)
             cosine_scores.append(None)
         else:
@@ -564,7 +562,8 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
 
 def knn_prediction(anchor_label, anchor_embed, input_embed):
     predicted_ids, predicted_scores = map(list, zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed,
-                                                      CFG_REG.NUM_NEIGHBORS) for embed in input_embed]))  # list comprehension returns multiple outputs
+                                                                          CFG_REG.KNN.NUM_NEIGHBORS) for embed in input_embed]))
+    # list comprehension returns multiple lists
 
     return predicted_ids, predicted_scores
 
