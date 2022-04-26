@@ -13,7 +13,7 @@ def drawing_boxes(row, img):
     face_scores = row['face scores']
     ids = row['ids']
 
-    img = cv2.putText(img, text='Image name: {}'.format(img_name), org= VISUALIZE.HEADER.ORG, fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+    img = cv2.putText(img, text='Image name: {}'.format(img_name), org= tuple(VISUALIZE.HEADER.ORG), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                       fontScale=VISUALIZE.HEADER.FONT_SCALE,
                       color=VISUALIZE.HEADER.COLOR, thickness=VISUALIZE.HEADER.THICKNESS, lineType=cv2.LINE_AA)
 

@@ -339,7 +339,7 @@ def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, pu
 		y_bot += rate * (y_bot - y_top)
 		target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
 
-		target_img = cv2.resize(target_img, CFG_REG.CROP.FACE_SIZE,
+		target_img = cv2.resize(target_img, tuple(CFG_REG.CROP.FACE_SIZE),
 		                        interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
 		return np.array(target_img).astype('int16')
