@@ -69,23 +69,23 @@ def read_images(root, purpose):
 
 def create_facenet_models():
 	"""
-This function returns an MTCNN + InceptionResnet V1 model bases - which was used to detect and encode human
-faces in images.
-Original GitHub Repository: https://github.com/timesler/facenet-pytorch
+	This function returns an MTCNN + InceptionResnet V1 model bases - which was used to detect and encode human
+	faces in images.
+	Original GitHub Repository: https://github.com/timesler/facenet-pytorch
 
-To have a better understanding of this model's parameters,
-use the Python built-in help () function
->> help (mtcnn_model_name)
-Example
->> model_A = create_mtcnn_model()
->> help (model_A)
+	To have a better understanding of this model's parameters,
+	use the Python built-in help () function
+	>> help (mtcnn_model_name)
+	Example
+	>> model_A = create_mtcnn_model()
+	>> help (model_A)
 
-To calibrate again MTCNN model's parameters after calling out this function:
->> mtcnn_model_name.parameters_want_to_change = ...
-Example
->> model_A = create_mtcnn_model()
->> model_A.image_size = 200
->> model_A.min_face_size = 10
+	To calibrate again MTCNN model's parameters after calling out this function:
+	>> mtcnn_model_name.parameters_want_to_change = ...
+	Example
+	>> model_A = create_mtcnn_model()
+	>> model_A.image_size = 200
+	>> model_A.min_face_size = 10
 """
 
 	device = config.DEVICE
