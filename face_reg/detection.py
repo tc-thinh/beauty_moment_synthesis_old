@@ -20,13 +20,31 @@ def read_image_from_path(path):
 	return img
 
 
-def resize_images(img_list, fraction = 1):
-	all_width = [img_list[i].shape[-3] for i in range(len(img_list))]
-	mean_width = int(sum(all_width) / len(all_width) * fraction)
-	all_height = [img_list[i].shape[-2] for i in range(len(img_list))]
-	mean_height = int(sum(all_height) / len(all_height) * fraction)
+def padding_image(img, max_width, max_height):
+	top = bottom = (max_height - img.shape[-3]) // 2
+	left = right = (max_width - img.shape[-2]) // 2
+	img = cv2.copyMakeBorder(img, top, bottom, left, right, borderType = cv2.BORDER_CONSTANT, value = [255, 255, 255])
+	img = cv2.resize(img, (max_width, max_height))  # cv2.resize(width, height)
 
-	img_list = np.stack([cv2.resize(img_list[i], (mean_height, mean_width)) for i in range(len(img_list))], axis = 0)
+	return img
+
+
+def resize_images(img_list, purpose, fraction = 1):
+	if purpose == 'anchor':
+		max_width = max([img_list[i].shape[-2] for i in range(len(img_list))])
+		max_height = max([img_list[i].shape[-3] for i in range(len(img_list))])
+		len_lst = len(img_list)
+
+		img_list = list(map(padding_image, img_list, [max_width] * len_lst, [max_height] * len_lst))
+		img_list = np.stack(img_list, axis = 0)
+
+	elif purpose == 'input':
+		all_width = [img_list[i].shape[-2] for i in range(len(img_list))]
+		mean_width = int(sum(all_width) / len(all_width) * fraction)
+		all_height = [img_list[i].shape[-3] for i in range(len(img_list))]
+		mean_height = int(sum(all_height) / len(all_height) * fraction)
+
+		img_list = np.stack([cv2.resize(img_list[i], (mean_width, mean_height)) for i in range(len(img_list))], axis = 0)
 
 	return img_list
 
@@ -39,35 +57,35 @@ def read_images(root, purpose):
 	if shape_check:
 		img_list = np.array(img_list)
 	else:
-		img_list = resize_images(img_list)
+		img_list = resize_images(img_list, purpose)
 
 	if purpose == 'input':
 		labels = [name for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 	if purpose == 'anchor':
-		labels = [path.replace('\\', '/').rsplit('/', 1)[-1] for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
+		labels = [path.rsplit('/', 1)[-1] for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 
 	return labels, img_list
 
 
 def create_facenet_models():
 	"""
-This function returns an MTCNN + InceptionResnet V1 model bases - which was used to detect and encode human
-faces in images.
-Original GitHub Repository: https://github.com/timesler/facenet-pytorch
+	This function returns an MTCNN + InceptionResnet V1 model bases - which was used to detect and encode human
+	faces in images.
+	Original GitHub Repository: https://github.com/timesler/facenet-pytorch
 
-To have a better understanding of this model's parameters,
-use the Python built-in help () function
->> help (mtcnn_model_name)
-Example
->> model_A = create_mtcnn_model()
->> help (model_A)
+	To have a better understanding of this model's parameters,
+	use the Python built-in help () function
+	>> help (mtcnn_model_name)
+	Example
+	>> model_A = create_mtcnn_model()
+	>> help (model_A)
 
-To calibrate again MTCNN model's parameters after calling out this function:
->> mtcnn_model_name.parameters_want_to_change = ...
-Example
->> model_A = create_mtcnn_model()
->> model_A.image_size = 200
->> model_A.min_face_size = 10
+	To calibrate again MTCNN model's parameters after calling out this function:
+	>> mtcnn_model_name.parameters_want_to_change = ...
+	Example
+	>> model_A = create_mtcnn_model()
+	>> model_A.image_size = 200
+	>> model_A.min_face_size = 10
 """
 
 	device = config.DEVICE
@@ -283,7 +301,6 @@ def filter_images(name, img_list, boxes):
 
 
 def clipping_boxes(img_list, boxes):
-
 	def clipping_method(img, box, format = 'opencv'):
 		if format == 'opencv':
 			x_left, y_top, x_right, y_bot = int(box[0]), int(box[1]), int(box[2]), int(box[3])
@@ -329,7 +346,6 @@ def clipping_boxes(img_list, boxes):
 
 
 def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, purpose = None):
-
 	def crop_with_percent(img, box, rate = 0):
 		x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
