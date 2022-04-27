@@ -48,16 +48,18 @@ def FIQA(df, img_list):
 
     for i in range(len(df)):
         input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=CFG_FIQA.EXTEND_RATE)
-        score = []
+        scores = []
         for j in input_data:
             if j.shape[0] > 0 and j.shape[1] > 0:
                 img = process_fiqa_image(j).to(device)
                 pred_score = net(img).data.cpu().numpy().squeeze()
-                score.append(pred_score)
-
-            if max(score) > CFG_FIQA.THRESHOLD:
-                keep_index.append(i)
-                fiqa_scores.append(score[0].item())
+                scores.append(pred_score)
+        scores = [score.item() for score in scores]
+        scores_avg = sum(scores)/len(scores)
+    #    if max(scores) > CFG_FIQA.THRESHOLD:
+        if scores_avg >= CFG_FIQA.THRESHOLD:
+            keep_index.append(i)
+            fiqa_scores.append([[score] for score in scores])
 
     new_df = df.iloc[keep_index]
     new_df['fiqa scores'] = fiqa_scores

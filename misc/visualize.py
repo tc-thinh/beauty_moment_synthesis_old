@@ -7,8 +7,8 @@ def drawing_boxes(row, img):
 	row = row[1]
 
 	img_name = row['filename']
-	fiqa_score = row['fiqa scores']
-	smile_score = row['smile scores']
+	fiqa_scores = row['fiqa scores']
+	smile_scores = row['smile scores']
 	bboxes = row['bboxes']
 	face_scores = row['face scores']
 	ids = row['ids']
@@ -39,12 +39,12 @@ def drawing_boxes(row, img):
 		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
 		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
-		img = cv2.putText(img, text = 'FIQA scores : {0:.3g}'.format(fiqa_score),
+		img = cv2.putText(img, text = 'FIQA scores : {0:.3g}'.format(fiqa_scores[bbox_index][0]),
 		                  org = (start_point[0], start_point[1] - 2 * VISUALIZE.NOTATIONS.SPACE),
 		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
 		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
-		img = cv2.putText(img, text = 'Smile scores : {0:.3g}'.format(smile_score),
+		img = cv2.putText(img, text = 'Smile scores : {0:.3g}'.format(smile_scores[bbox_index][0]),
 		                  org = (start_point[0], start_point[1] - VISUALIZE.NOTATIONS.SPACE),
 		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
 		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
