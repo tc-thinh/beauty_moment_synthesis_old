@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import os
+from deepface import DeepFace
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
@@ -27,9 +28,8 @@ def get_smile_score(df, img_list, model):
     scores = []
     for j in input_data:
       img = cv2.resize(j, (139, 139))
-      img = np.reshape(img, [1, 139, 139, 3])
-      predictions = model.predict(img)
-      scores.append(predictions[0][0] * 100)
+      predictions = DeepFace.analyze(img)
+      scores.append(predictions['emotion']['happy'])
 
     smile_scores.append([[score] for score in scores])
     smile_score_avg.append(sum(scores) / len(scores))
