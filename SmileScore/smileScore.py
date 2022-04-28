@@ -27,8 +27,7 @@ def get_smile_score(df, img_list, model):
     input_data = get_target_bbox(img_list[i], df["bboxes"][i], p = CFG_FIQA.EXTEND_RATE)
     scores = []
     for j in input_data:
-      img = cv2.resize(j, (139, 139))
-      predictions = DeepFace.analyze(img)
+      predictions = DeepFace.analyze(j)
       scores.append(predictions['emotion']['happy'])
 
     smile_scores.append([[score] for score in scores])
