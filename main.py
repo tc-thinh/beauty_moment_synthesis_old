@@ -136,8 +136,8 @@ def main():
                     new_message="-----Starting smile score assessment module-----", 
                     type="string + enter")
 
-    smile_model = load_smile_model(CFG_SMILE.MODEL_PATH)
-    df, input_img = get_smile_score(df, input_img, smile_model)
+    # smile_model = load_smile_model(CFG_SMILE.MODEL_PATH)
+    df, input_img = get_smile_score(df, input_img)
 
     if args.visualize_boxes:
       input_img = visualizing_bounding_boxes(df, input_img)
